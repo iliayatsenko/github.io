@@ -1,0 +1,17 @@
+menu:
+  Blog: /
+  About: /about
+
+favicon: journal-code.svg
+logo: journal-code.svg
+
+# Disqus shortname
+disqus:
+
+# Analytics
+google_analytics:
+
+# Copyright Infomation
+copyright:
+  since: 2022
+  name: Ilia Yatsenko

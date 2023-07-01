@@ -1,0 +1,15 @@
+mixin tags()
+    ul.home.tags-list
+        each tag in site.tags.data
+            - if (is_tag())
+                - if (is_tag(tag.name))
+                    span.tag-prefix
+                        != '#'
+                    = tag.name
+            - else
+                a.tag(href=relative_url(url, tag.permalink), title=tag.name)
+                    |
+                    |
+                    span.tag-prefix
+                        != '#'
+                    = tag.name
