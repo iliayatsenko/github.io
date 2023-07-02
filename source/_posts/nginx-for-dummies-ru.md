@@ -1,9 +1,11 @@
 ---
 title: NGINX для чайников
-date: 2022-02-03
+date: 2022-05-30
 tags:
-- nginx
-- cheatsheet
+    - nginx
+    - cheatsheet
+categories:
+    - RU
 ---
 
 Чаще всего когда мне надо сделать так, чтоб какой-то URL вызывал какой-то PHP код, приходится иметь дело с конфигом nginx. 

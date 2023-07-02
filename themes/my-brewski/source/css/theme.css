@@ -20,7 +20,7 @@ ul {
 p {
   letter-spacing: -.01em;
   line-height: 1.8;
-  margin: 1.2em 0;
+  margin: .6em 0;
 }
 
 a,
@@ -161,7 +161,7 @@ header .nav-list-item a {
 }
 
 .home.post-list {
-  margin: 2em 0;
+  /*margin: 2em 0;*/
   list-style: none;
 }
 .home.post-list .post-list-item {
@@ -188,12 +188,12 @@ header .nav-list-item a {
 }
 
 .post-block .post-title {
-  margin: .65em 0;
+  margin: .4em 0;
   font-size: 1.5em;
 }
 .post-block .post-info {
   color: #393e46;
-  margin: 1.2em 0;
+  margin: .8em 0;
 }
 .post-block .post-info span {
   margin-left: .5rem;
@@ -330,11 +330,6 @@ main.container {
 }
 
 @media screen and (max-width: 700px) {
-  main.container,
-  .home.post-list,
-  .archive {
-    margin-top: 0;
-  }
   .ds-thread,
   #disqus_thread {
     margin: 2em .8em;
@@ -357,6 +352,29 @@ footer .copyright a:hover {
   color: #393e46;
 }
 
-.tag-prefix {
+.tag-prefix, .cat-prefix {
   font-weight: bold;
+}
+
+.category.current *, .tag.current *, .home.categories-list *, .home.tags-list * {
+  display: inline;
+}
+
+.category.current, .tag.current, .home.tags-list p, .home.categories-list p {
+  font-weight: bold;
+  font-style: italic;
+}
+
+.home.tags-list a, .home.categories-list a {
+  font-style: italic;
+}
+
+.home.tags-list a:hover, .home.categories-list a:hover {
+  text-decoration: underline;
+  font-style: italic;
+}
+
+.post-info {
+  font-size: 0.8em;
+  font-style: italic;
 }

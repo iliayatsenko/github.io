@@ -3,6 +3,15 @@ mixin postInfo(item)
         != full_date(item.date, config.date_format)
         |
         |
+        each cat in item.categories.data
+            a.tag(href=relative_url(url, cat.permalink), title=cat.name)
+                |
+                |
+                span.cat-prefix
+                    != '@'
+                != cat.name
+        |
+        |
         each tag in item.tags.data
             a.tag(href=relative_url(url, tag.permalink), title=tag.name)
                 |

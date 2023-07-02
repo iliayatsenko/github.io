@@ -1,15 +1,20 @@
 mixin tags()
-    ul.home.tags-list
-        each tag in site.tags.data
-            - if (is_tag())
-                - if (is_tag(tag.name))
-                    span.tag-prefix
-                        != '#'
-                    = tag.name
-            - else
-                a.tag(href=relative_url(url, tag.permalink), title=tag.name)
-                    |
-                    |
-                    span.tag-prefix
-                        != '#'
-                    = tag.name
+    div.home.tags-list
+        p
+            != __('tags') + ': '
+        ul
+            each tag in site.tags.data
+                li
+                    a.tag(href=relative_url(url, tag.permalink), title=tag.name)
+                        |
+                        |
+                        span.tag-prefix
+                            != '#'
+                        != tag.name
+
+mixin tag()
+    p.tag.current
+        != __('posts_tagged') + ' '
+        span.tag-prefix
+            != '#'
+        != page.tag

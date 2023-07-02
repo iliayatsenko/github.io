@@ -1,9 +1,11 @@
 ---
 title: Тестируемый код
-date: 2022-02-03
+date: 2022-02-10
 tags:
     - unit-tests
     - architecture
+categories:
+    - RU
 ---
 
 Астрологи обьявили неделю Тестируемого Кода.

@@ -3,7 +3,16 @@ extends partial/layout.pug
 block container
     include mixins/post.pug
     include mixins/tag.pug
-    +tags()
+    include mixins/category.pug
+
+    - if (is_home())
+        +tags()
+        +categories()
+    - if (is_tag())
+        +tag()
+    - if (is_category())
+        +category()
+
     +posts()
 
 block copyright

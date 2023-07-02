@@ -1,0 +1,20 @@
+mixin categories()
+    div.home.categories-list
+        p
+            != __('categories') + ': '
+        ul
+            each cat in site.categories.data
+                li
+                    a.tag(href=relative_url(url, cat.permalink), title=cat.name)
+                        |
+                        |
+                        span.cat-prefix
+                            != '@'
+                        = cat.name
+
+mixin category()
+    p.category.current
+        != __('posts_in_category') + ' '
+        span.cat-prefix
+            != '@'
+        != page.category
