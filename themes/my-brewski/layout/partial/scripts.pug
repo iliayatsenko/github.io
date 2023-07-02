@@ -15,6 +15,7 @@ script.
     document.addEventListener('DOMContentLoaded', function() {
         Barba.Pjax.start();
         Barba.Dispatcher.on('transitionCompleted', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             Prism.highlightAll();
         })
     })

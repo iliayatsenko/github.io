@@ -8,7 +8,7 @@ body {
 }
 
 .wrap {
-  width: 90%;
+  width: 95%;
   max-width: 45em;
   margin: 0 auto;
 }
@@ -112,12 +112,6 @@ header {
   align-items: center;
   flex-wrap: wrap;
 }
-
-/*@media screen and (max-width: 600px) {*/
-/*  header {*/
-/*    justify-content: center;*/
-/*  }*/
-/*}*/
 
 header .branding {
   display: inline-block;
@@ -268,7 +262,7 @@ header .nav-list-item a {
 
 .post-content h1,
 .post-block .post-title {
-  font-size: 2em;
+  font-size: 1.5em;
 }
 
 .post-content h2 {
