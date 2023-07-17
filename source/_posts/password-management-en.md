@@ -12,7 +12,7 @@ Modern life without password manager is hard. In this article I will tell how I 
 
 <!-- more -->
 
-##### The problem {#the-problem}
+#### The problem
 
 You know all this stuff: endless repetitive restoring of passwords, having one password for all the cases, and getting annoyed when sites refuse to accept it again and again, then adding random symbols to the end, forgetting about them, and the same story again… I suffered for a long time, just because I was afraid of wrapping my head around new concepts and setting up new tools. But one day I decided to try one of the popular password managers. How did it end, read next.
 
@@ -22,7 +22,7 @@ Management panels of these services were overhelmed with irrelevant details and 
 
 I can’t say that these tools are bad in any way, they are great and very popular. That was just not what I wanted. I wanted a really minimalistic tool, understandable for me (at least superficially, I am not security expert in any way). So I decided to return to my previous management style (or, rather, it’s absence).
 
-##### Solution {#solution}
+#### Solution
 
 But after some time I encountered a linux ‘pass’ utility. “This is salvation” - thought I after reading short and clear man page. And it really was: now I am enjoying using it on all my devices.
 
@@ -32,7 +32,7 @@ You can think about GPG keys as analog of SSH keys, but with some subtle differe
 
 But setup was not so easy, despite it absolutely was worth it. Here I describe what I've done, sequentially. If some steps are not relevant for you, just skip them.
 
-##### Setting up `pass` on Ubuntu {#setting-up-pass-on-ubuntu}
+##### Setting up `pass` on Ubuntu
 ```bash
 sudo apt-get install pass
 ```
@@ -41,7 +41,7 @@ Then, we need to initialize it by passing the ID of GPG key. Here is how to [fin
 After intialization we can start [using `pass`](#pass-usage) locally, or set up [synchronization with remote 
 repository](#synchronization-with-remote-git-repository).
 
-##### Setting up GPG keys {#setting-up-gpg-keys}
+##### Setting up GPG keys
 
 Usually, one pair of GPG keys is already present in the system, but I preferred to generate a new one. Here are good manuals from Github about how to [find](https://docs.github.com/en/authentication/managing-commit-signature-verification/checking-for-existing-gpg-keys) or [generate new](https://docs.github.com/en/authentication/managing-commit-signature-verification/generating-a-new-gpg-key) GPG keys.
 
@@ -54,7 +54,7 @@ pass init <your GPG key ID>
 
 This setup is enough to [start using `pass`](#pass-usage) locally.
 
-##### Synchronization with remote git repository {#synchronization-with-remote-git-repository}
+##### Synchronization with remote git repository
 
 But we would like to sync passwords across devices, so we need to share our GPG keys to all of them and to set up git integration.
 
@@ -65,9 +65,9 @@ pass git init \
 && pass git push -u --all
 ```
 
-Now we can setup `pass` on other devices, like [iOS](#setup-for-ios) or [Mac](#setup-for-mac).
+Now we can setup `pass` on other devices, like [iOS](#set-up-for-ios) or [Mac](#setup-for-mac).
 
-##### Setup for iOS {#setup-for-ios}
+##### Set up for iOS
 
 Install application [Pass for iOS](https://mssun.github.io/passforios/). And open it.
 
@@ -94,7 +94,7 @@ shred id_rsa.png && rm id_rsa.png
 
 Now you can switch to Passwords pane, swipe down, and all your passwords will be synced with remote repository. Congratulations!
 
-##### Setup for Mac {#setup-for-mac}
+##### Setup for Mac
 
 On macbook to install `pass`, run this:
 ```bash
@@ -106,7 +106,7 @@ Then you need to [setup GPG keys](#setting-up-gpg-keys). After that you can whet
 
 But I've started on Ubuntu, so I've got my GPG keys there. Now I need to import them on Mac somehow. If both your Ubuntu and Mac computers are connected to the same network, the easiest way to do this is [via SSH in local network](#sharing-gpg-keys-via-ssh-in-local-network).
 
-##### Sharing GPG keys via SSH in local network {#sharing-gpg-keys-via-ssh-in-local-network}
+##### Sharing GPG keys via SSH in local network
 
  To share GPG keys between two computers inside local network we need to set up SSH server on one computer and `scp` 
  needed files on another computer. In this example we will share GPG keys from Ubuntu to Mac.
@@ -185,7 +185,7 @@ And maybe deny further SSH connections on Ubuntu:
 sudo ufw deny ssh
 ```
 
-##### GPG keys to QR-codes {#gpg-keys-to-qr-codes}
+##### GPG keys to QR-codes
 
 As the whole key don’t fit into the amount of data which QR-code can transmit, we will need to split it on parts, and generate a sequence of QR-codes.
 Firstly, lets generate QR-codes for private key.
@@ -230,7 +230,7 @@ Scan or store QR-codes and delete files and generated images after that:
 shred public.asc public.asc-* && rm public.asc public.asc-*
 ```
 
-##### Pass usage {#pass-usage}
+##### Pass usage
 
 Pass usage is pretty simple. 
 For example, to generate new password, store it and copy to clipboard, simply run
