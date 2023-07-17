@@ -16,13 +16,13 @@ categories:
 
 Включаем режим профилирования в xdebug. Для этого в php.ini добавляем это:
 
-``` ini
+```ini
 xdebug.mode=profile # или debug,profile, если хотим комбинированный режим
 ```
 
 и это:
 
-``` ini
+```ini
 xdebug.output_dir=/var/profiling # куда писать файлы с результатами
 xdebug.use_compression=false # не архивировать файлы
 xdebug.profiler_output_name=cachegrind.out.%H.%R # шаблон имен файлов 
@@ -32,14 +32,14 @@ xdebug.profiler_output_name=cachegrind.out.%H.%R # шаблон имен фай�
 
 Создаем папку и даем права на запись:
 
-``` bash
+```bash
 mkdir /home/user/myapp/var/profiling \
 	&& chmod -R 777 /home/user/myapp/var/profiling
 ```
 
 Перезапускаем PHP-FPM. Если он докеризирован, это проще всего сделать так:
 
-``` bash
+```bash
 docker exec -u root my_phpfpm_container_name bash -c "kill -USR2 1"
 ```
 
@@ -53,7 +53,7 @@ Tools → Analyze Xdebug Profiler Snapshot… → выбираем нужный 
 
 Удобный докеризированный web-интерфейс: https://github.com/jokkedk/webgrind. Запускаем так:
 
-``` bash
+```bash
 docker run --rm -v /home/user/myapp/var/profiling:/tmp -p 8089:80 jokkedk/webgrind:latest
 ```
 
