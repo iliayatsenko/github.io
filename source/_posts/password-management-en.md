@@ -12,7 +12,7 @@ Modern life without password manager is hard. In this article I will tell how I 
 
 <!-- more -->
 
-#### The problem
+##### The problem
 
 You know all this stuff: endless repetitive restoring of passwords, having one password for all the cases, and getting annoyed when sites refuse to accept it again and again, then adding random symbols to the end, forgetting about them, and the same story again… I suffered for a long time, just because I was afraid of wrapping my head around new concepts and setting up new tools. But one day I decided to try one of the popular password managers. How did it end, read next.
 
@@ -22,7 +22,7 @@ Management panels of these services were overhelmed with irrelevant details and 
 
 I can’t say that these tools are bad in any way, they are great and very popular. That was just not what I wanted. I wanted a really minimalistic tool, understandable for me (at least superficially, I am not security expert in any way). So I decided to return to my previous management style (or, rather, it’s absence).
 
-#### Solution
+##### Solution
 
 But after some time I encountered a linux ‘pass’ utility. “This is salvation” - thought I after reading short and clear man page. And it really was: now I am enjoying using it on all my devices.
 
