@@ -104,9 +104,4 @@ deploy:
 email: iliayatsenko@gmail.com
 
 marked:
-  modifyAnchors: 0
-  anchorAlias: false
-  headerIds: true
-  external_link:
-    enable: true
-    nofollow: false
+  modifyAnchors: 1

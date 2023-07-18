@@ -183,10 +183,6 @@ header .nav-list-item a {
   color: #9e1900;
 }
 
-.post {
-  padding-top: 1em;
-}
-
 .post-block .post-title {
   margin: .4em 0;
   font-size: 1.5em;
@@ -212,7 +208,7 @@ header .nav-list-item a {
 .post-content h4,
 .post-content h5,
 .post-content h6 {
-  margin-bottom: 1em;
+  margin-bottom: 0.2em;
 }
 
 .post-content h2 a:before,
@@ -234,38 +230,44 @@ header .nav-list-item a {
   content: "";
 }
 
+.post-list .post-tile {
+  font-size: 1.6em;
+}
+
 .post-content h1,
-.post-block .post-title {
-  font-size: 1.5em;
-}
-
-.post-content h2 {
-  margin-top: 1.8em;
-  font-size: 2.8em;
-}
-
-.post-content h3 {
-  margin-top: 1.6em;
-  font-size: 2.6em;
-}
-
-.post-content h4 {
-  margin-top: 1.4em;
-  font-size: 2.4em;
-}
-
-.post-content h5 {
+.post .post-title {
   margin-top: 1.2em;
   font-size: 2.2em;
 }
 
-.post-content h6 {
-  margin-top: 1em;
+.post-content h2 {
+  margin-top: 1.1em;
   font-size: 2em;
+}
+
+.post-content h3 {
+  margin-top: 1em;
+  font-size: 1.8em;
+}
+
+.post-content h4 {
+  margin-top: 0.9em;
+  font-size: 1.6em;
+}
+
+.post-content h5 {
+  margin-top: 0.8em;
+  font-size: 1.4em;
+}
+
+.post-content h6 {
+  margin-top: 0.7em;
+  font-size: 1.2em;
 }
 
 .post-content a {
   color: #9e1900;
+  text-decoration: underline;
 }
 .post-content blockquote {
   margin: 2em 0;
