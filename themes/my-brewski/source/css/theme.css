@@ -13,10 +13,6 @@ body {
   margin: 0 auto;
 }
 
-ul {
-  margin: 1rem 0;
-}
-
 p {
   letter-spacing: -.01em;
   line-height: 1.8;
@@ -161,7 +157,6 @@ header .nav-list-item a {
 }
 
 .home.post-list {
-  /*margin: 2em 0;*/
   list-style: none;
 }
 .home.post-list .post-list-item {
@@ -327,15 +322,8 @@ header .nav-list-item a {
 }
 
 main.container {
-  margin: 2em .7em;
+  margin: 1em .7em;
   min-height: 30vh;
-}
-
-@media screen and (max-width: 700px) {
-  .ds-thread,
-  #disqus_thread {
-    margin: 2em .8em;
-  }
 }
 
 footer .copyright {
@@ -362,6 +350,11 @@ footer .copyright a:hover {
   display: inline;
 }
 
+.home.tags-list, .home.categories-list {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
 .category.current, .tag.current, .home.tags-list p, .home.categories-list p {
   font-weight: bold;
   font-style: italic;
@@ -376,7 +369,7 @@ footer .copyright a:hover {
   font-style: italic;
 }
 
-.post-block a:hover {
+.post-block a:hover, .paginator a:hover {
   text-decoration: underline;
 }
 
@@ -388,4 +381,81 @@ footer .copyright a:hover {
 #to-top{
   float: right;
   text-decoration: underline;
+}
+
+#mce-subscription-form {
+  width: 100%;
+  padding: 10px 10px;
+  border: 1px solid black;
+  border-radius: 0.1em;
+  margin-top: 3em;
+  display: flex;
+  flex-direction: row;
+}
+
+#mce-subscription-form label {
+  flex: 0 0 auto;
+  margin-right: 10px;
+}
+
+#mce-subscription-form input[type="email"] {
+  border: 1px solid #eee;
+  flex: 1 1 auto;
+  margin-right: 10px;
+}
+
+#mce-subscription-form input[type="submit"] {
+  flex: 0 0 auto;
+}
+
+.paginator {
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+}
+
+.paginator * {
+  display: inline;
+}
+
+.paginator p {
+  font-weight: bold;
+  font-style: italic;
+  margin-right: 20px;
+}
+
+.page-number {
+  margin: 1px 10px;
+  padding: 5px 5px;
+}
+
+.page-number.current {
+  border: 1px solid black;
+  border-radius: 0.1em;
+}
+
+@media screen and (max-width: 700px) {
+  .ds-thread,
+  #disqus_thread {
+    margin: 2em .8em;
+  }
+
+  #mce-subscription-form {
+    flex-wrap: wrap;
+  }
+
+  #mce-subscription-form input[type="email"] {
+    flex: 1 1 100%;
+    margin-top: 10px;
+    line-height: 2em;
+  }
+
+  #mce-subscription-form input[type="submit"] {
+    margin-top: 10px;
+    line-height: 2em;
+    flex: 0 0 100%;
+  }
+
+  #mce-subscription-form label {
+    flex: 0 0 100%;
+  }
 }

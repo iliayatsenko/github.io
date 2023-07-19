@@ -15,6 +15,13 @@ block container
 
     +posts()
 
+    - if (is_home())
+        div.paginator
+            p
+                != __('pages') + ': '
+            != paginator(prev_next=false)
+
+        include partial/subscribe-form.html
+
 block copyright
-    include partial/to-top.pug
     include partial/copyright.pug
