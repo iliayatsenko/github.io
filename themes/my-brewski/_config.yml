@@ -1,6 +1,7 @@
 menu:
   Blog: /
   About: /about
+  Links: /links
 
 favicon: journal-code.svg
 logo: journal-code.svg

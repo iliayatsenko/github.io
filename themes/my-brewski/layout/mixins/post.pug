@@ -4,7 +4,7 @@ mixin postInfo(item)
         |
         |
         each cat in item.categories.data
-            a.tag(href=relative_url(url, cat.permalink), title=cat.name)
+            a(href=relative_url(url, cat.permalink), title=cat.name)
                 |
                 |
                 span.cat-prefix
@@ -13,7 +13,7 @@ mixin postInfo(item)
         |
         |
         each tag in item.tags.data
-            a.tag(href=relative_url(url, tag.permalink), title=tag.name)
+            a(href=relative_url(url, tag.permalink), title=tag.name)
                 |
                 |
                 span.tag-prefix

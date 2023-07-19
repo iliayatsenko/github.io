@@ -267,8 +267,8 @@ header .nav-list-item a {
 
 .post-content a {
   color: #9e1900;
-  text-decoration: underline;
 }
+
 .post-content blockquote {
   margin: 2em 0;
   padding: .5em 1.3em;
@@ -376,7 +376,16 @@ footer .copyright a:hover {
   font-style: italic;
 }
 
+.post-block a:hover {
+  text-decoration: underline;
+}
+
 .post-info {
   font-size: 0.8em;
   font-style: italic;
+}
+
+#to-top{
+  float: right;
+  text-decoration: underline;
 }

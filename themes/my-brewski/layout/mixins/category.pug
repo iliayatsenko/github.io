@@ -5,7 +5,7 @@ mixin categories()
         ul
             each cat in site.categories.data
                 li
-                    a.tag(href=relative_url(url, cat.permalink), title=cat.name)
+                    a(href=relative_url(url, cat.permalink), title=cat.name)
                         |
                         |
                         span.cat-prefix
