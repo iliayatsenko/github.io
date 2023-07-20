@@ -2,11 +2,10 @@
     - var currentDate = new Date();
     - var currentYear = currentDate.getFullYear();
     - var copyrightYear = ! theme.copyright.since || currentYear == theme.copyright.since ? currentYear : theme.copyright.since + ' - ' + currentYear;
-    - var copyrightURL = theme.copyright.url || config.url
     - var copyrightName = theme.copyright.name || config.author
-    p &copy; #{copyrightYear} #[a(href=copyrightURL) #{copyrightName}]
+    p &copy; #{copyrightYear} #{copyrightName}
         br
-        | Powered by #[a(href='https://hexo.io/', rel='noreferrer', target='_blank') Hexo]
+        | Powered by #[a(href='https://hexo.io/', rel='noreferrer', target='_blank') Hexo] and #[a(href='https://mailchimp.com/', rel='noreferrer', target='_blank') Mailchimp]
         br
         | Design inspired by #[a(href='https://github.com/tiaanduplessis/hexo-theme-brewski', rel='noreferrer', target='_blank') Brewski]
         br

@@ -133,6 +133,4 @@ in the test at once.
 --- In tests, you need to create full-fledged instances with all dependent objects, which can be a daunting task and 
   require helper factory methods.
 
-Personally, in this regard, I share the preferences of V. Khorikov - the author of a book about unit testing - and I write tests in the classical style, with a minimum number of mocks. More information on the topic can be found in his book:
-
-[https://drive.google.com/file/d/1YAUXik5BfINrS7rlba00ndbish1oHbRa/view?usp=drivesdk](https://drive.google.com/file/d/1YAUXik5BfINrS7rlba00ndbish1oHbRa/view?usp=drivesdk)
+Personally, in this regard, I share the preferences of V. Khorikov - the author of a book about unit testing - and I write tests in the classical style, with a minimum number of mocks. More information on the topic can be found in [his book](https://www.amazon.com/gp/product/1617296279).

@@ -334,10 +334,14 @@ footer .copyright {
 }
 footer .copyright p,
 footer .copyright a {
-  padding: 1em 0;
   color: #393e46;
   font-weight: 300;
 }
+
+footer .copyright a {
+  text-decoration: underline;
+}
+
 footer .copyright a:hover {
   color: #393e46;
 }
