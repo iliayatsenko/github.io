@@ -15,10 +15,19 @@ script.
 
     function toggleToTopBtn() {
         var toTopBtn = document.getElementById('to-top');
+        if (toTopBtn === null) return;
+
         if (window.innerHeight >= document.documentElement.scrollHeight) {
             toTopBtn.style.display = 'none';
         } else {
             toTopBtn.style.display = 'block';
+        }
+    }
+
+    function showThanksForSubscriptionAlertIfSubscribed() {
+        if (window.location.hash === '#subscribed') {
+            alert('#{__("thanks-for-subscription")}');
+            history.replaceState(null, null, ' ')
         }
     }
 
@@ -31,11 +40,7 @@ script.
         });
 
         toggleToTopBtn();
+        showThanksForSubscriptionAlertIfSubscribed();
     });
-
-    if (window.location.hash === '#subscribed') {
-        alert('Thank you for subscription!');
-        history.replaceState(null, null, ' ')
-    }
 
     

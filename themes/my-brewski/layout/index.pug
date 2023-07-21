@@ -19,7 +19,7 @@ block container
         div.paginator
             p
                 != __('pages') + ': '
-            != paginator(show_all=true)
+            != paginator({show_all:true, prev_next:false})
 
         include partial/subscribe-form.html
 
