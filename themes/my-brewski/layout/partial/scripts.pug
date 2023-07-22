@@ -11,8 +11,9 @@
 //-             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 //-         })();
 
-// Barba
-script(src='https://cdnjs.cloudflare.com/ajax/libs/barba.js/1.0.0/barba.min.js')
+//- Barba
+//- sadly, does not works correctly with Giscus, so turned off for now
+//- script(src='https://cdnjs.cloudflare.com/ajax/libs/barba.js/1.0.0/barba.min.js')
 
 // Giscus
 script(
@@ -71,17 +72,27 @@ script.
         }
     }
 
+    /*
     function updateCommentsOnTransition() {
         if (!commentsEnabled()) return;
         const giscusIframe = document.querySelector('iframe.giscus-frame');
         if (giscusIframe === null) return;
         giscusIframe.contentWindow.postMessage(
-            {giscus: {setConfig: {term: window.location.pathname.replace(/^\//, '')}}},
+            {
+                giscus: {
+                    setConfig: {
+                        term: window.location.pathname.replace(/^\//, ''),
+                        backLink: window.location.href + '?giscus-logged-in'
+                    }
+                }
+            },
             '*'
         );
     }
+    */
 
     document.addEventListener('DOMContentLoaded', function() {
+        /*
         Barba.Pjax.start();
         Barba.Dispatcher.on('transitionCompleted', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -90,6 +101,7 @@ script.
             toggleComments();
             updateCommentsOnTransition();
         });
+        */
 
         toggleToTopBtn();
         showThanksForSubscriptionAlertIfSubscribed();
