@@ -38,9 +38,7 @@ script.
 
     function toggleToTopBtn() {
         var toTopBtn = document.getElementById('to-top');
-
         if (toTopBtn === null) return;
-
         if (window.innerHeight >= document.documentElement.scrollHeight) {
             toTopBtn.style.display = 'none';
         } else {
@@ -57,19 +55,15 @@ script.
 
     function commentsEnabled() {
         let commentsEnabled = false;
-
         const post = document.getElementsByClassName('post')[0];
-
         if (post) {
             commentsEnabled = post.dataset.commentsEnabled === '1' ? true : false;
         }
-
         return commentsEnabled;
     }
 
     function toggleComments() {
         const comments = document.getElementsByClassName('giscus')[0];
-
         if (commentsEnabled()) {
             comments.style.display = 'block';
         } else {
@@ -79,11 +73,8 @@ script.
 
     function updateCommentsOnTransition() {
         if (!commentsEnabled()) return;
-
         const giscusIframe = document.querySelector('iframe.giscus-frame');
-
         if (giscusIframe === null) return;
-
         giscusIframe.contentWindow.postMessage(
             {giscus: {setConfig: {term: window.location.pathname.replace(/^\//, '')}}},
             '*'
