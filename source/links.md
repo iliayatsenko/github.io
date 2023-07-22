@@ -2,6 +2,7 @@
 title: Collection of interesting links.
 date: 2023-07-19
 layout: page
+comments: false
 ---
 
 ###### This is my collection of interesting links, mostly tech blogs:
