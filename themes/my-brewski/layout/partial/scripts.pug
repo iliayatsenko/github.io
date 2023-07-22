@@ -1,20 +1,44 @@
-//- Analytics tracking
-if theme.google_analytics
-    script.
-        var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', '#{theme.google_analytics}']);
-        _gaq.push(['_trackPageview']);
+//- //- Analytics tracking
+//- if theme.google_analytics
+//-     script.
+//-         var _gaq = _gaq || [];
+//-         _gaq.push(['_setAccount', '#{theme.google_analytics}']);
+//-         _gaq.push(['_trackPageview']);
+//-
+//-         (function () {
+//-             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+//-             ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+//-             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+//-         })();
 
-        (function () {
-            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-        })();
+// Barba
 script(src='https://cdnjs.cloudflare.com/ajax/libs/barba.js/1.0.0/barba.min.js')
+
+// Giscus
+script(
+        src="https://giscus.app/client.js"
+        data-repo="iliayatsenko/iliayatsenko.github.io"
+        data-repo-id="R_kgDOHnmmlw"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOHnmml84CYDR-"
+        data-mapping="pathname"
+        data-strict="1"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light_high_contrast"
+        data-loading="lazy"
+        data-lang="en"
+        crossorigin="anonymous"
+        async
+    )
+
+// Other
 script.
 
     function toggleToTopBtn() {
         var toTopBtn = document.getElementById('to-top');
+
         if (toTopBtn === null) return;
 
         if (window.innerHeight >= document.documentElement.scrollHeight) {
@@ -31,16 +55,54 @@ script.
         }
     }
 
+    function commentsEnabled() {
+        let commentsEnabled = false;
+
+        const post = document.getElementsByClassName('post')[0];
+
+        if (post) {
+            commentsEnabled = post.dataset.commentsEnabled === '1' ? true : false;
+        }
+
+        return commentsEnabled;
+    }
+
+    function toggleComments() {
+        const comments = document.getElementsByClassName('giscus')[0];
+
+        if (commentsEnabled()) {
+            comments.style.display = 'block';
+        } else {
+            comments.style.display = 'none';
+        }
+    }
+
+    function updateCommentsOnTransition() {
+        if (!commentsEnabled()) return;
+
+        const giscusIframe = document.querySelector('iframe.giscus-frame');
+
+        if (giscusIframe === null) return;
+
+        giscusIframe.contentWindow.postMessage(
+            {giscus: {setConfig: {term: window.location.pathname.replace(/^\//, '')}}},
+            '*'
+        );
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         Barba.Pjax.start();
         Barba.Dispatcher.on('transitionCompleted', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             Prism.highlightAll();
             toggleToTopBtn();
+            toggleComments();
+            updateCommentsOnTransition();
         });
 
         toggleToTopBtn();
         showThanksForSubscriptionAlertIfSubscribed();
+        toggleComments();
     });
 
     

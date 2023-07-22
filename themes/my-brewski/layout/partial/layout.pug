@@ -3,7 +3,7 @@ html(lang=config.language)
     head
         include head.pug
     body
-        .wrap#barba-wrapper
+        .wrap
             header
                 h1.branding
                     a(href=url_for(''), title=config.title)
@@ -11,9 +11,15 @@ html(lang=config.language)
                         = config.title
                 include nav.pug
 
-            .barba-container
-                main.container
-                    block container
-                footer
-                    block copyright
+            #barba-wrapper
+                .barba-container
+                    main.container
+                        block container
+
+            block comments
+                .giscus
+
+            footer
+                include copyright.pug
+
         include scripts.pug

@@ -3,16 +3,7 @@ extends partial/layout.pug
 block site_title
     != page.title + ' • ' + config.title
 
-block description
-    - var desc = page.desc || page.title + ' - ' + config.author;
-    meta(name='description', content=desc)
-
 block container
     include mixins/post.pug
     +post(page)
-    include partial/comment.pug
-
     include partial/to-top.pug
-
-block copyright
-    include partial/copyright.pug

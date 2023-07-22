@@ -44,7 +44,7 @@ mixin posts()
 
 //- Post Page
 mixin post(item)
-    .post
+    div(class='post', data-comments-enabled=page.comments ? 1 : 0)
         article.post-block
             h1.post-title
                 +postTitle(item.title)

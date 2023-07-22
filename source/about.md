@@ -2,6 +2,7 @@
 title: Hi, my name is Ilia Yatsenko.
 date: 2022-02-03
 layout: page
+comments: false
 ---
 
 Here I post notes from my day-to-day work as a backend developer, mainly specialized in **PHP**.
