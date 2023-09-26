@@ -142,8 +142,8 @@ These commands possibly will ask for the password of your Ubuntu user, and then 
 
 After this we need to import GPG keys from the received files:
 ```bash
-gpg --import secret.key \
-    && gpg --import public.key
+gpg --import secret.asc \
+    && gpg --import public.asc
 ```
 
 Now to check if keys imported:
