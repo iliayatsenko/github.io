@@ -58,7 +58,7 @@ cat local_private.pem >> local_signed.pem
 ```
 ### 2. Configure your local server to use this certificate
 For Nginx, add these lines to the `server` block:
-```nginx
+```bash
 listen 443 ssl;
 ssl_certificate /Absolute/path/to/local_signed.pem;
 ssl_certificate_key /Absolute/path/to/local_signed.pem;
@@ -140,7 +140,7 @@ Now you can intercept and modify any request matching pattern (see field "Interc
 ```bash
 cat <<EOT > ~/mitmproxy-addons/add-xdebug-session-param.py
 def request(flow) -> None:
-flow.request.query["XDEBUG_SESSION_START"] = "1"
+    flow.request.query["XDEBUG_SESSION_START"] = "1"
 EOT
 ```
 And restart mitmproxy with plugin:
