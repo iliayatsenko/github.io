@@ -2,9 +2,9 @@
 title: Setting up Android emulator to request API on localhost via HTTPS through Mitmproxy
 date: 2023-10-22
 tags:
-    - Android
+    - android
     - api
-    - HTTPS
+    - https
     - mitmproxy
     - manual
 categories:

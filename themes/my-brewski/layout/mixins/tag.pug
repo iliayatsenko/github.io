@@ -3,7 +3,8 @@ mixin tags()
         p
             != __('tags') + ': '
         ul
-            each tag in site.tags.data
+            - const tags_sorted = site.tags.data.toSorted((a, b) => a.name.localeCompare(b.name));
+            each tag in tags_sorted
                 li
                     a(href=relative_url(url, tag.permalink), title=tag.name)
                         |
