@@ -11,7 +11,10 @@ categories:
     - EN
 ---
 
-Recently I needed to make some manual acceptance testing on Android application which talks to the API I am working on. For this purpose I installed Android Studio and set up Android emulator which makes requests to the API running in docker on local host. But there was one major problem to solve: Android emulator requires HTTPS connection, with the SSL certificate it trusts. It was not easy to figure out all the "how?" and "why?" during solving this issue, so I decided to document my final solution here.
+Recently I needed to make some manual acceptance testing on Android application which talks to the API I am working on. For this purpose I installed Android Studio and set up Android emulator which makes requests to the API running in docker on local host. 
+<!-- more -->
+
+But there was one major problem to solve: Android emulator requires HTTPS connection, with the SSL certificate it trusts. It was not easy to figure out all the "how?" and "why?" during solving this issue, so I decided to document my final solution here.
 
 ## General info (very simplistic)
 When you run Android emulator, the default IP address to connect to local host is 10.0.2.2. Because if you specify `localhost` or `127.0.0.1` it will lead to the Android device's own local host. 

@@ -11,9 +11,10 @@ categories:
     - EN
 ---
 
-In this article I will continue the story started in [previous one](android-emulator-with-local-api-https-en.md).
+In this article I will continue the story started in {% post_link android-emulator-with-local-api-https-en 'previous one' %}.
 
 Now I will set up real application running on physical iPhone to call API listening on my development laptop in the same local network. Also, I will continue use [Mitmproxy](https://mitmproxy.org) to inspect all the requests made.
+<!-- more -->
 
 ### Determine the IP of your laptop in local network.
 Each device in a local network has its own IP address, accessible for all other devices in the same local network (connected to the same Wi-Fi, for example). To know this IP, open the details of current Wi-Fi connection. "IP address" field should be somewhere around. Usually it looks like "192.168.*.***".
@@ -28,8 +29,8 @@ mitmweb
 ```
 Now your proxy server is listening on port 8080, and you can see all the request coming through it on http://127.0.0.1:8081.
 
-### Install Mitmproxy CA certificate on mobile device.
-Now we need to say our iPhone to trust the SSL certificate used by proxy server. Firstly we need to install it, as described in [previous post](android-emulator-with-local-api-https-en.md#1-install-mitmproxys-ca-certificate-on-your-device). On iPhone we need manually change the trust setting for installed certificate: go to the Settings, find "Certificate Trust Settings", and toggle "Enable full trust for root certificates" checkbox near "mitmproxy".
+# Install Mitmproxy CA certificate on mobile device.
+Now we need to say our iPhone to trust the SSL certificate used by proxy server. Firstly we need to install it, as described in {% post_link android-emulator-with-local-api-https-en 'previous post' %}. On iPhone we need manually change the trust setting for installed certificate: go to the Settings, find "Certificate Trust Settings", and toggle "Enable full trust for root certificates" checkbox near "mitmproxy".
 
 ### Test
 Open you application on mobile device, or any site in browser. You will need all the HTTP(S) requests made from iPhone in mitmweb panel on the laptop.
@@ -82,7 +83,7 @@ mitmweb -s mitmproxy-addons/redirect-from-to.py --set redirect_from="api.myapp.c
 If your API on localhost is not using HTTPS, or use self-signed certificate (which is most probably true) - `--ssl-insecure` option is required; else you can omit it. Now all requests to "api.myapp.com" should be redirected to localhost.
 
 ### Modifying requests
-If you need to modify all requests, you can use another addon script, as described in [previous post](android-emulator-with-local-api-https-en.md#8-modify-all-requests-automatically).
+If you need to modify all requests, you can use another addon script, as described in {% post_link android-emulator-with-local-api-https-en 'previous post' %}.
 
 ### Conclusion
 As you can see, it is not so hard to inspect, redirect and modify all the network interactions of your application. You do not even need to re-build it, you can use the production version. The only thing is that it can have short connection timeouts, and you will not be able to deeply debug your API, because connection will be lost. But you can always replay any request in your mitmweb panel, so this is not a big problem.
