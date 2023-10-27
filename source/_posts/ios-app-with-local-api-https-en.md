@@ -29,7 +29,7 @@ mitmweb
 ```
 Now your proxy server is listening on port 8080, and you can see all the request coming through it on http://127.0.0.1:8081.
 
-# Install Mitmproxy CA certificate on mobile device.
+### Install Mitmproxy CA certificate on mobile device.
 Now we need to say our iPhone to trust the SSL certificate used by proxy server. Firstly we need to install it, as described in {% post_link android-emulator-with-local-api-https-en 'previous post' %}. On iPhone we need manually change the trust setting for installed certificate: go to the Settings, find "Certificate Trust Settings", and toggle "Enable full trust for root certificates" checkbox near "mitmproxy".
 
 ### Test
