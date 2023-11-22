@@ -2,7 +2,7 @@
 title: Відеокурс "Основи MySQL"
 date: 2023-11-22
 tags:
-    - video-course
+    - video
     - mysql
 categories:
     - UA
