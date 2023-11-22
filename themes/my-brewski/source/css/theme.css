@@ -468,3 +468,20 @@ footer .copyright a:hover {
   min-height: 400px;
   width: 100%;
 }
+
+summary:not(.opened)::before {
+  content: '→';
+}
+
+summary.opened::before {
+  content: '↓';
+}
+
+summary * {
+  cursor: pointer;
+  display: inline;
+}
+
+summary *:hover {
+  text-decoration: underline;
+}

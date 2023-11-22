@@ -91,6 +91,15 @@ script.
     }
     */
 
+    function initSummaryButtonsArrows() {
+        const summaryBtns = document.getElementsByTagName('summary');
+        for (let i = 0; i < summaryBtns.length; i++) {
+            summaryBtns[i].addEventListener('click', function() {
+               this.classList.toggle('opened');
+            });
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         /*
         Barba.Pjax.start();
@@ -106,6 +115,9 @@ script.
         toggleToTopBtn();
         showThanksForSubscriptionAlertIfSubscribed();
         toggleComments();
+        initSummaryButtonsArrows();
     });
+
+
 
     
