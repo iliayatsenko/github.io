@@ -114,6 +114,15 @@ function updateCommentsOnTransition() {
 }
 */
 
+function initSummaryButtonsArrows() {
+    const summaryBtns = document.getElementsByTagName('summary');
+    for (let i = 0; i < summaryBtns.length; i++) {
+        summaryBtns[i].addEventListener('click', function() {
+           this.classList.toggle('opened');
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     /*
     Barba.Pjax.start();
@@ -129,4 +138,5 @@ document.addEventListener('DOMContentLoaded', function() {
     toggleToTopBtn();
     showThanksForSubscriptionAlertIfSubscribed();
     toggleComments();
+    initSummaryButtonsArrows();
 });</script></body></html>
