@@ -463,3 +463,8 @@ footer .copyright a:hover {
     flex: 0 0 100%;
   }
 }
+
+.video-container iframe {
+  min-height: 400px;
+  width: 100%;
+}
