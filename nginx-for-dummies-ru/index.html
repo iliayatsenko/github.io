@@ -1,0 +1,407 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index, follow"><meta name="google-site-verification" content="7Vxvzs1QobmcQElr_rNUddMrgaDuT2v1jJ-HMRWN9DU"><title>NGINX для чайников • Ilia's notes</title><meta name="description" content="Ilia's notes about software architecture, testability, and other, more mundane things"><link rel="icon" href="/journal-code.svg"><link rel="stylesheet" href="https://unpkg.com/nanoreset@3.0.1/nanoreset.min.css"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="Ilia's notes"><link rel="stylesheet" href="/css/prism.css"><script src="/js/prism.js"></script><meta name="generator" content="Hexo 6.3.0"></head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="Ilia's notes"><img class="logo-image" src="/journal-code.svg" alt="logo">Ilia's notes</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">BLOG</a></li><li class="nav-list-item"><a class="nav-list-link" href="/about" target="_self">ABOUT</a></li><li class="nav-list-item"><a class="nav-list-link" href="/links" target="_self">LINKS</a></li></ul></header><div id="barba-wrapper"><div class="barba-container"><main class="container"><div class="post" data-comments-enabled="1"><article class="post-block"><h1 class="post-title">NGINX для чайников</h1><div class="post-info">30.05.2022
+<a href="../categories/RU/" title="RU">
+<span class="cat-prefix">@</span>RU</a>
+<a href="../tags/nginx/" title="nginx">
+<span class="tag-prefix">#</span>nginx</a><a href="../tags/cheatsheet/" title="cheatsheet">
+<span class="tag-prefix">#</span>cheatsheet</a></div><div class="post-content"><p>Чаще всего когда мне надо сделать так, чтоб какой-то URL вызывал какой-то PHP код, приходится иметь дело с конфигом nginx. </p>
+<span id="more"></span>
+
+<p>И каждый раз это превращается в долгие страдания и заканчивается <del>громкими матами</del> полным отчаянием.</p>
+<p>Даже однажды разобравшись в том как это делается, всё равно успеваешь всё забыть до того как это понадобится в следующий раз. И опять всё сначала. Кстати, помимо nginx есть еще несколько подобных контр-интуитивных вещей, которые никак не удаётся “выучить раз и навсегда”: например, язык bash, или регулярные выражения. Про bash есть даже шутка:</p>
+<p><a target="_blank" rel="noopener" href="https://twitter.com/jakewharton/status/1334177665356587008">https://twitter.com/jakewharton/status/1334177665356587008</a></p>
+<p>Поэтому я решил очень кратко законспектировать основные правила, по которым nginx разруливает запросы, чтоб в следующий раз иметь быстрое напоминание, без необходимости перечитывать документацию. Тут поверхностно описаны только самые часто-употребляемые директивы, так что на звание “руководства” не претендую.</p>
+<p><strong>http</strong></p>
+<p>Итак. Конфигурация состоит из вложенных друг в друга “<strong>контекстов</strong>”, отделенных символами <code>&#123;</code>  и <code>&#125;</code>. Директивы распространяются на контекст в котором они объявлены и на все вложенные в него, при этом вложенные контексты могут переопределять эти директивы - примерно как одноименные переменные во вложенной функции в javascript перекрывают переменные из более “внешней” функции. Всё начинается в так называемом “<strong>главном контексте</strong>” - это всё что снаружи фигурных скобок. Этот контекст нам не очень интересен, там задаются какие-то дефолтные настройки. Интересен вложенный в него контекст <code>http</code>, а в нем - контекст(ы) <code>server</code>.</p>
+<p><strong>server</strong></p>
+<p>Один контекст <code>server</code> содержит директивы для одного “<strong>виртуального сервера</strong>”, и таких серверов может быть множество. При поступлении HTTP-запроса, nginx определяет соответствующий виртуальный сервер по запрашиваемому IP-адресу, порту и содержимому заголовка <code>Host</code>. Пример:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"> # &quot;Главный&quot; контекст
+
+http &#123;
+	# Какие-то общие настройки по-умолчанию,
+	# могут быть переопределены во вложенных контекстах
+	client_max_body_size 100M;
+
+	# Виртуальные сервера:
+	
+	# 1. этот конфиг будет применен при запросах на порт 80 
+	# с заголовком Host: mysite1.com или Host: mysite2.com
+	server &#123;
+		listen 80;
+		server_name mysite1.com mysite2.com;
+	&#125;
+
+	# 2. этот конфиг будет применен при запросах на порт 80 
+	# с заголовком Host:another-mysite.com
+	server &#123;
+		listen 80;
+		server_name another-mysite.com;
+	&#125;
+
+	# 3. а этот - при запросах на порт 80 
+	# со всеми другими значениями заголовка Host или вообще без него.
+	server &#123;
+		# конфигурация по-умолчанию для запросов на порт 80
+		listen 80 default_server;
+	&#125;
+
+	# ВАЖНО и неочевидно: если Host не совпал ни с одним из server_name, 
+	# и default_server для порта не указан явно, 
+	# будет применен конфиг ПЕРВОГО виртуального сервера для этого порта.
+	# То есть, при конфиге такого вида:
+	server &#123;
+		listen 192.168.1.17:81;
+		server_name mysite1.com;
+	&#125;
+	server &#123;
+		listen 192.168.1.1:81;
+		server_name mysite2.com;
+	&#125;
+	# запрос к 192.168.1.1:81 c заголовком Host: anothersite.com будет обработан
+	# первым виртуальным сервером, несмотря на несовпедение Host с server_name
+&#125;</code></pre>
+
+<p>Директива <code>server_name</code> может содержать регулярные выражения или переменные, подробнее тут: <a target="_blank" rel="noopener" href="http://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name">http://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name</a> и тут: <a target="_blank" rel="noopener" href="http://nginx.org/ru/docs/http/request_processing.html">http://nginx.org/ru/docs/http/request_processing.html</a>.</p>
+<p><strong>location</strong></p>
+<p>Внутри каждого контекста <code>server</code> может быть несколько контекстов <code>location</code>, которые определяют правила для разных запрашиваемых URI. Сравнивается только URI-часть запроса, после её URL-раскодирования и разрешения относительных путей (<code>.</code> и <code>..</code>), <strong>без GET-параметров.</strong> Подробности в примере:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	listen 80 default_server;
+	
+	# Общие настройки для всего виртуального сервера, 
+	# могут быть переопределены во вложенных контекстах
+
+	# Корневая папка, в которой сервер будет искать файлы, 
+	# может быть переопределена в location&#39;ах
+	root &#x2F;var&#x2F;www&#x2F;mysite;
+
+	# Конфигурации для конкретных URI:
+	
+	# 1. точное соответсвие (&#x3D;)
+	location &#x3D; &#x2F;exact-uri &#123;
+		return 200 &quot;Requested URI equals &#39;&#x2F;exact-uri&#39;&quot;;
+	&#125;
+
+	# 2. соответствие по префиксу (&#x2F;)
+	location &#x2F;prefix &#123;
+		return 200 &quot;Requested URI starts with &#39;&#x2F;prefix&#39;&quot;;
+	&#125;
+
+	# 3. регистрозависимое соответствие регулярному выражению (~)
+	location ~ ^regexp$ &#123;
+		return 200 &quot;Requested URI matches &#39;^regexp$&#39;&quot;;
+	&#125;
+
+	# 4. регистроНЕзависимое соответствие регулярному выражению (~*)
+	location ~* ^regexp$ &#123;
+		return 200 &quot;Requested URI matches &#39;^regexp$&#39; or &#39;^REGEXP$&#39;&quot;;
+	&#125;
+&#125;</code></pre>
+
+<p>Вкратце алгоритм поиска соответствия выглядит так:</p>
+<ol>
+<li><p>если найдено точное совпадение с <code>location</code>‘ом <strong>точного соответствия,</strong> применяется эта конфигурация и поиск останавливается. </p>
+</li>
+<li><p>иначе находится <strong>самый длинный</strong> из <strong>префиксных</strong> <code>location</code>‘ов совпадающий с URI и запоминается;</p>
+</li>
+<li><p>ищется совпадение среди <code>location</code>‘ов заданных <strong>регулярным выражением,</strong> и применяется <strong>первое</strong> совпадение;</p>
+</li>
+<li><p>если же ни одно из регулярных выражений не совпало с URI, применяется <strong>префиксный</strong> <code>location</code>, запомненный ранее на шаге 2.</p>
+</li>
+</ol>
+<p>Если мы хотим остановить поиск на шаге 2 и не искать по регулярным выражениям, можно добавить к префиксному <code>location</code>‘у знак <code>^~</code>, вот так:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location ^~ &#x2F;prefix &#123;
+	 # если URI начинается с &#x2F;prefix, применится этот блок и поиск будет остановлен
+&#125;
+
+location ~ &#x2F;prefix&#x2F;.* &#123;
+	# это не будет применено, поиск остановится в предыдущем блоке
+&#125;</code></pre>
+
+<p><code>location</code>‘ы можно вкладывать друг в друга, при этом вложенные должны указывать <strong>абсолютные, а не относительные URI:</strong></p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location &#x2F;outer &#123;
+	# абсолютные URI - префикс &#x2F;outer дублируется во всех вложенных определениях!
+	location &#x2F;outer&#x2F;inner &#123; 
+		return 200 &quot;Requested URI starts with &#39;&#x2F;outer&#x2F;inner&#39;&quot;;
+	&#125;
+	location ~ ^&#x2F;outer&#x2F;regexp.* &#123;
+		return 200 &quot;Requested URI matches &#39;^&#x2F;outer&#x2F;regexp.*&#39;&quot;;
+	&#125;
+&#125;</code></pre>
+
+<p>Подробнее можно почитать тут: <a target="_blank" rel="noopener" href="http://nginx.org/ru/docs/http/ngx_http_core_module.html#location">http://nginx.org/ru/docs/http/ngx_http_core_module.html#location</a></p>
+<p><strong>index</strong></p>
+<p>Чаще всего используются директивы <code>index</code> и <code>try_files</code>.</p>
+<p>Они могут находиться как на уровне <code>server</code>, так и на уровне <code>location</code>.</p>
+<p><code>index</code> указывает какой файл отдавать по умолчанию если в запрошенном URI не указан конкретный файл, то есть если URI выглядит как путь к папке, а не к файлу. <strong>Указанные файлы проверяются в порядке слева направо и, как только находится существующий файл, происходит внутренний редирект на URI с добавлением имени этого фала.</strong>  </p>
+<p>Внутренний редирект означает <strong>исполнение всего блока</strong> <code>server</code> <strong>заново</strong>, с измененным URI. Это не то же самое что HTTP-редирект, т.к. URI видоизменяется только “внутри” nginx’a и клиент этого не видит. То есть:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	# ...
+
+	# при запросе www.mysite.com&#x2F;some&#x2F;long&#x2F;path, если существует файл 
+	# &#x2F;var&#x2F;www&#x2F;mysite_root&#x2F;some&#x2F;long&#x2F;path&#x2F;existing-file.html,
+	# в ответ будет получено &#39;hello&#39;
+
+	root &#x2F;var&#x2F;www&#x2F;mysite_root;
+	
+	index 
+		not-existing-file.html # этого файла не существует в папке some&#x2F;long&#x2F;path
+		existing-file.html # а этот существует в папке some&#x2F;long&#x2F;path
+		another-existing-file.html; # и этот тоже, но это уже не важно)
+	
+	# это не применится, потому что несуществующие файлы пропускаются
+	location &#x2F;not-existing-file.html &#123;
+		return 200 &#39;:(&#39;;
+	&#125;
+	
+	# это применится, потому что файл существует и внутренний редирект происходит
+	location &#x2F;existing-file.html &#123;
+		return 200 &#39;hello&#39;; 
+	&#125;
+&#125;</code></pre>
+
+<p>При этом внутренний редирект происходит только один раз:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	# ...
+
+	location &#x2F; &#123;
+		# если файл i1.html существует,
+		# добавлеяем &#x2F;i1.html к URI и ищем подходящий location заново
+	  index i1.html; 
+	&#125;
+	
+	location &#x2F;i1.html &#123;
+		# даже если файл i2.html существует, второй редирект не происходит (!),
+		# т.к. у нас уже есть конкретный файл для ответа - i1.html.
+		index i2.html;
+	&#125;
+	
+	location &#x2F;i2.html &#123;
+		return 200 &#39;:(&#39;; # это не выполнится
+	&#125;
+&#125;</code></pre>
+
+<p>Для PHP приложений с единой точкой входа (как в большинстве современных фреймворков) достаточно указать на уровне виртуального сервера:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"># направлять все запросы без указания конкретного файла на index.php
+index index.php;
+
+location ~ index.php$ &#123;
+	# проксируем запрос на PHP-FPM...
+&#125;</code></pre>
+
+<p> Документация: <a target="_blank" rel="noopener" href="http://nginx.org/ru/docs/http/ngx_http_index_module.html">http://nginx.org/ru/docs/http/ngx_http_index_module.html</a>.</p>
+<p><strong>try_files</strong></p>
+<p>Директива <code>try_files</code> позволяет последовательно проверить несколько файлов и отдать первый существующий, а также указать fallback на случай если ни один из файлов не найден. Чаще всего она используется в сочетании с переменной <code>$uri</code>, которая содержит текущий URI с учетом всех внутренних преобразований (см. <code>index</code> и <code>rewrite</code>). Пример:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	#...
+
+	root &#x2F;var&#x2F;www;
+
+	location ~ \.jpg$ &#123;
+		# при запросе www.mysite.com&#x2F;path&#x2F;to&#x2F;image.jpg
+		# будет проверено существование файла &#x2F;var&#x2F;www&#x2F;path&#x2F;to&#x2F;image.jpg,
+		# затем, если такого нет, будет проверен &#x2F;var&#x2F;www&#x2F;path&#x2F;to&#x2F;images&#x2F;image.jpg,
+		# если и его нет, будет внутренний редирект на &#x2F;fallback-uri.html
+		try_files $uri &#x2F;images&#x2F;$uri &#x2F;fallback-image.jpg;
+	&#125;
+
+	location &#x2F;fallback-image.jpg$ &#123;
+		# это выполнится если запрошенный файл не существует
+		# ни в запрошенной директории ни в поддиректории images
+		return 200 &#39;default image&#39;;
+
+		# кстати, если нужно чтоб этот location не был доступен извне, 
+		# а только для внутренних редиректов, добавляем директиву internal
+		internal;
+	&#125;
+
+	# в качестве fallback можно указать код ошибки, чаще всего 404
+	location ~ \.html$ &#123;
+		try_files $uri &#x3D;404;
+	&#125;
+	
+	# ...или named location
+	location &#x2F; &#123;
+		try_files $uri @phpfpm;
+	&#125;
+
+	location @phpfpm &#123;
+		# проксируем запрос на PHP-FPM...
+	&#125;
+&#125;</code></pre>
+
+<p>В <code>try_files</code> можно указать <code>$uri/</code> (с слешом в конце), тогда nginx будет искать запрашиваемую директорию. По умолчанию, nginx не отдает содержимое директорий (если только не указано <code>autoindex on</code>), поэтому в случае если директория существует, в дело вступает директива <code>index</code>, указывающая какой файл из этой директории отдавать (см. выше).</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	#...
+
+	root &#x2F;var&#x2F;www;
+	index index.html;
+
+	location &#x2F; &#123;
+		try_files $uri $uri&#x2F; &#x3D;404;
+	&#125;
+
+	location ~ index.html$ &#123;
+		return 200 &#39;serving file $uri&#x2F;index.thml&#39;;
+	&#125;
+&#125;</code></pre>
+
+<p><code>try_files</code> <strong>не сохраняет GET-параметры текущего запроса при внутреннем редиректе</strong>. Чтоб избежать их потери используется конструкция из переменных <code>$is_args</code> и <code>$args</code>:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	# ...
+	
+	try_files $uri $uri&#x2F; &#x2F;index.php$is_args$args;
+
+	# или так, если хотим добавить новые пареметры и сохранить текущие
+	try_files $uri $uri&#x2F; &#x2F;index.php?additional_param&#x3D;1&amp;$args;
+
+	location &#x3D; index.php &#123;
+		# тут $args будет содержать все изначальные и добавленные GET-параметры 
+	&#125;
+&#125;</code></pre>
+
+<p>Документация: <a target="_blank" rel="noopener" href="http://nginx.org/ru/docs/http/ngx_http_core_module.html#try_files">http://nginx.org/ru/docs/http/ngx_http_core_module.html#try_files</a>.</p>
+<p>Внутренние редиректы могут быть результатом и других директив, например <code>rewrite</code> или <code>error_page</code>. </p>
+<p><strong>rewrite</strong></p>
+<p>Эта директива делает внутренний или внешний редирект - если новый URI начинается с <code>http://</code>, <code>https://</code>, или переменной <code>$scheme</code>, то произойдет внешний (HTTP) редирект, иначе - внутренний. <strong>Если новый URI содержит GET-параметры, они будут добавлены к тем что уже есть в текущем запросе</strong>. Подробнее в документации: <a target="_blank" rel="noopener" href="http://nginx.org/ru/docs/http/ngx_http_rewrite_module.html#rewrite">http://nginx.org/ru/docs/http/ngx_http_rewrite_module.html#rewrite</a>. Пример:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	# ...
+	
+	location &#x3D; &#x2F;rewritten &#123;
+		rewrite .* &#x2F;another-location?additional_param&#x3D;1; # внутренний редирект
+	&#125;
+
+	location &#x3D; &#x2F;another-location &#123;
+		rewrite .* &#39;http:&#x2F;&#x2F;mysite.com&#x2F;another-location; # а теперь HTTP-редирект 
+	&#125;
+&#125;</code></pre>
+
+<p><strong>error_page</strong></p>
+<p>Указывает URI, на который следует сделать внутренний редирект, если в процессе обработки запроса возникла ошибка. Детали в документации: <a target="_blank" rel="noopener" href="http://nginx.org/ru/docs/http/ngx_http_core_module.html#error_page">http://nginx.org/ru/docs/http/ngx_http_core_module.html#error_page</a>. Пример:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	# ...
+	
+	# заменять все 404 коды на 200 и редиректить на другой location
+	error_page 404 &#x3D;200 &#x2F;404_error.html;
+	
+	location &#x3D; &#x2F;404_error.html &#123;
+		# этот блок будет выполнен если в процессе возникнет ошибка с кодом 404 
+	&#125;
+&#125;</code></pre>
+
+<p><code>error_page</code>, как и <code>try_files</code>, <strong>не сохраняет GET-параметры текущего запроса при внутреннем редиректе.</strong> Так что для их сохранения нужно явно добавлять переменную <code>$args</code> к новому URI (см. выше).</p>
+<p><strong>Количество внутренних редиректов ограничено 10-ю за один HTTP-запрос</strong>, во избежание бесконечных циклов. Если происходит больше 10-ти, nginx вернёт ошибку. </p>
+<p>Директивы <code>location</code> и <code>rewrite</code> могут содержать регулярные выражения з захватывающими группами,  значения из которых могут быть использованы в последующих директивах:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	# ...
+	
+	rewrite &#x2F;user-(\d+)&#x2F;product-(\d+) &#x2F;user&#x2F;$1&#x2F;product&#x2F;$2;
+
+	location &#x2F;new&#x2F;user&#x2F;(\d+)&#x2F;product&#x2F;(\d+) &#123;
+		return 200 &#39;you requested user with id $1 and product with id $2&#39;;
+	&#125;
+&#125;</code></pre>
+
+<p>Также можно использовать встроенные переменные: <a target="_blank" rel="noopener" href="http://nginx.org/en/docs/http/ngx_http_core_module.html#variables">http://nginx.org/en/docs/http/ngx_http_core_module.html#variables</a>.</p>
+<p><strong>alias</strong></p>
+<p>Еще одна полезная директива - <code>alias</code>. Она позволяет заменить часть URI, например чтобы обратиться к файлам, чей путь в файловой системе не совпадает с URI.  Например:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	# ...
+
+	root &#x2F;var&#x2F;www&#x2F;mysiteroot;
+
+	location &#x2F;styles &#123;
+		# файлы из папки &#x2F;var&#x2F;www&#x2F;mysiteroot&#x2F;web&#x2F;assets&#x2F;css 
+		# будут доступны по URI &#x2F;styles&#x2F;&#123;имя файла&#125;
+		alias &#x2F;web&#x2F;assets&#x2F;css;
+	&#125;
+	location &#x2F;scripts &#123;
+		# файлы из папки &#x2F;var&#x2F;www&#x2F;mysiteroot&#x2F;web&#x2F;assets&#x2F;js 
+		# будут доступны по URI &#x2F;scripts&#x2F;&#123;имя файла&#125;
+		alias &#x2F;web&#x2F;assets&#x2F;js;
+	&#125;
+&#125;</code></pre>
+
+<p><code>alias</code> удобно совмещать с <code>location</code>‘ами, заданными регулярными выражениями:</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+	# ...
+
+	root &#x2F;var&#x2F;www&#x2F;mysiteroot;
+
+	location &#x2F;admin&#x2F;(.*) &#123;
+		# &quot;маппинг&quot; базового URI на другую корневую директорию
+		# (в данном случае на &#x2F;var&#x2F;www&#x2F;mysiteroot&#x2F;protected&#x2F;web)
+		alias &#x2F;protected&#x2F;web&#x2F;$1;
+	&#125;
+&#125;</code></pre>
+
+<p>Документация: <a target="_blank" rel="noopener" href="http://nginx.org/ru/docs/http/ngx_http_core_module.html#alias">http://nginx.org/ru/docs/http/ngx_http_core_module.html#alias</a>.</p>
+<p>На этом всё. С помощью рассмотренных директив можно решить большинство простых задач, хотя это, наверное, одна сотая часть возможностей nginx’a. Хорошо что остальные возможности вряд ли пригодятся рядовому PHP-разработчику : )</p>
+</div></article></div><a href="javascript:window.scrollTo({ top: 0, behavior: 'smooth' })" id="to-top"><span>↑ back to top</span></a></main></div></div><div class="giscus" id="comments"></div><footer><div class="copyright"><p>&copy; 2022 - 2023 Ilia Yatsenko<br>Powered by <a href="https://hexo.io/" rel="noreferrer" target="_blank">Hexo</a>, <a href="https://mailchimp.com/" rel="noreferrer" target="_blank">Mailchimp</a> and <a href="https://giscus.app/" rel="noreferrer" target="_blank">Giscus</a><br>Design inspired by <a href="https://github.com/tiaanduplessis/hexo-theme-brewski" rel="noreferrer" target="_blank">Brewski</a><br>Sources of this blog on  <a href="https://github.com/iliayatsenko/iliayatsenko.github.io" rel="noreferrer" target="_blank">Github</a></p></div></footer></div><!-- Giscus--><script src="https://giscus.app/client.js" data-repo="iliayatsenko/iliayatsenko.github.io" data-repo-id="R_kgDOHnmmlw" data-category="Announcements" data-category-id="DIC_kwDOHnmml84CYDR-" data-mapping="pathname" data-strict="1" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light_high_contrast" data-loading="lazy" data-lang="en" crossorigin="anonymous" async></script><!-- Other--><script>function toggleToTopBtn() {
+    var toTopBtn = document.getElementById('to-top');
+    if (toTopBtn === null) return;
+    if (window.innerHeight >= document.documentElement.scrollHeight) {
+        toTopBtn.style.display = 'none';
+    } else {
+        toTopBtn.style.display = 'block';
+    }
+}
+
+function showThanksForSubscriptionAlertIfSubscribed() {
+    if (window.location.hash === '#subscribed') {
+        alert('Thank you for your subscription!');
+        history.replaceState(null, null, ' ')
+    }
+}
+
+function commentsEnabled() {
+    let commentsEnabled = false;
+    const post = document.getElementsByClassName('post')[0];
+    if (post) {
+        commentsEnabled = post.dataset.commentsEnabled === '1' ? true : false;
+    }
+    return commentsEnabled;
+}
+
+function toggleComments() {
+    const comments = document.getElementsByClassName('giscus')[0];
+    if (commentsEnabled()) {
+        comments.style.display = 'block';
+    } else {
+        comments.style.display = 'none';
+    }
+}
+
+/*
+function updateCommentsOnTransition() {
+    if (!commentsEnabled()) return;
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    if (giscusIframe === null) return;
+    giscusIframe.contentWindow.postMessage(
+        {
+            giscus: {
+                setConfig: {
+                    term: window.location.pathname.replace(/^\//, ''),
+                    backLink: window.location.href + '?giscus-logged-in'
+                }
+            }
+        },
+        '*'
+    );
+}
+*/
+
+document.addEventListener('DOMContentLoaded', function() {
+    /*
+    Barba.Pjax.start();
+    Barba.Dispatcher.on('transitionCompleted', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        Prism.highlightAll();
+        toggleToTopBtn();
+        toggleComments();
+        updateCommentsOnTransition();
+    });
+    */
+
+    toggleToTopBtn();
+    showThanksForSubscriptionAlertIfSubscribed();
+    toggleComments();
+});</script></body></html>

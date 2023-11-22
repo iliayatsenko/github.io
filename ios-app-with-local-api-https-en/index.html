@@ -1,0 +1,132 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index, follow"><meta name="google-site-verification" content="7Vxvzs1QobmcQElr_rNUddMrgaDuT2v1jJ-HMRWN9DU"><title>Setting up real iOS app to request API on localhost via HTTPS through Mitmproxy • Ilia's notes</title><meta name="description" content="Ilia's notes about software architecture, testability, and other, more mundane things"><link rel="icon" href="/journal-code.svg"><link rel="stylesheet" href="https://unpkg.com/nanoreset@3.0.1/nanoreset.min.css"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="Ilia's notes"><link rel="stylesheet" href="/css/prism.css"><script src="/js/prism.js"></script><meta name="generator" content="Hexo 6.3.0"></head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="Ilia's notes"><img class="logo-image" src="/journal-code.svg" alt="logo">Ilia's notes</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">BLOG</a></li><li class="nav-list-item"><a class="nav-list-link" href="/about" target="_self">ABOUT</a></li><li class="nav-list-item"><a class="nav-list-link" href="/links" target="_self">LINKS</a></li></ul></header><div id="barba-wrapper"><div class="barba-container"><main class="container"><div class="post" data-comments-enabled="1"><article class="post-block"><h1 class="post-title">Setting up real iOS app to request API on localhost via HTTPS through Mitmproxy</h1><div class="post-info">27.10.2023
+<a href="../categories/EN/" title="EN">
+<span class="cat-prefix">@</span>EN</a>
+<a href="../tags/api/" title="api">
+<span class="tag-prefix">#</span>api</a><a href="../tags/https/" title="https">
+<span class="tag-prefix">#</span>https</a><a href="../tags/mitmproxy/" title="mitmproxy">
+<span class="tag-prefix">#</span>mitmproxy</a><a href="../tags/manual/" title="manual">
+<span class="tag-prefix">#</span>manual</a><a href="../tags/ios/" title="ios">
+<span class="tag-prefix">#</span>ios</a></div><div class="post-content"><p>In this article I will continue the story started in <a href="/android-emulator-with-local-api-https-en/" title="Setting up Android emulator to request API on localhost via HTTPS through Mitmproxy">previous one</a>.</p>
+<p>Now I will set up real application running on physical iPhone to call API listening on my development laptop in the same local network. Also, I will continue use <a target="_blank" rel="noopener" href="https://mitmproxy.org/">Mitmproxy</a> to inspect all the requests made.</p>
+<span id="more"></span>
+
+<h3 id="determine-the-ip-of-your-laptop-in-local-network"><a href="#determine-the-ip-of-your-laptop-in-local-network" class="headerlink" title="Determine the IP of your laptop in local network."></a>Determine the IP of your laptop in local network.</h3><p>Each device in a local network has its own IP address, accessible for all other devices in the same local network (connected to the same Wi-Fi, for example). To know this IP, open the details of current Wi-Fi connection. “IP address” field should be somewhere around. Usually it looks like “192.168.<em>.</em>**”.</p>
+<h3 id="configure-connection-proxy-on-mobile-device"><a href="#configure-connection-proxy-on-mobile-device" class="headerlink" title="Configure connection proxy on mobile device."></a>Configure connection proxy on mobile device.</h3><p>We need to tell our mobile device to send all the network traffic through proxy server. This is made quite easy. For example, on iPhone: open details of current Wi-Fi connection and press “Configure Proxy”. Then select “Manual”, and type the IP of your laptop from previous step as “Server”, and port, on which your Mitmproxy will be listening, as “Port”. As we are going to use Mitmproxy, the default port is 8080.</p>
+<h3 id="start-mitmproxy"><a href="#start-mitmproxy" class="headerlink" title="Start Mitmproxy"></a>Start Mitmproxy</h3><p>Now install <a target="_blank" rel="noopener" href="https://mitmproxy.org/">Mitmproxy</a> on your laptop. Then start <code>mitmweb</code> - a utility of mitmproxy which shows traffic in a browser.</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mitmweb</code></pre>
+<p>Now your proxy server is listening on port 8080, and you can see all the request coming through it on <a target="_blank" rel="noopener" href="http://127.0.0.1:8081/">http://127.0.0.1:8081</a>.</p>
+<h3 id="install-mitmproxy-ca-certificate-on-mobile-device"><a href="#install-mitmproxy-ca-certificate-on-mobile-device" class="headerlink" title="Install Mitmproxy CA certificate on mobile device."></a>Install Mitmproxy CA certificate on mobile device.</h3><p>Now we need to say our iPhone to trust the SSL certificate used by proxy server. Firstly we need to install it, as described in <a href="/android-emulator-with-local-api-https-en/" title="Setting up Android emulator to request API on localhost via HTTPS through Mitmproxy">previous post</a>. On iPhone we need manually change the trust setting for installed certificate: go to the Settings, find “Certificate Trust Settings”, and toggle “Enable full trust for root certificates” checkbox near “mitmproxy”.</p>
+<h3 id="test"><a href="#test" class="headerlink" title="Test"></a>Test</h3><p>Open you application on mobile device, or any site in browser. You will need all the HTTP(S) requests made from iPhone in mitmweb panel on the laptop.</p>
+<h3 id="filter-requests"><a href="#filter-requests" class="headerlink" title="Filter requests"></a>Filter requests</h3><p>There may be a lot of different request from different apps and utilities, so if you want to show only specific ones, you can add <code>--allow-hosts</code> option when running mitmproxy:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mitmweb --allow-hosts&#x3D;&quot;api.myapp.com&quot;</code></pre>
+<p>Note that despite this setting all the HTTP requests will appear in the mitmweb panel. This filter only applies to the HTTPS requests.</p>
+<h3 id="redirect-specific-requests"><a href="#redirect-specific-requests" class="headerlink" title="Redirect specific requests"></a>Redirect specific requests</h3><p>For now we can see all the network activity of our application, but what if we want to redirect all the requests to our API on localhost, for deeper debugging? This can be achieved by simple mitmproxy addon. For example, we want all requests to the “api.myapp.com” to be redirected to the “localhost:444”:</p>
+<ol>
+<li><p>Create a file with following content:</p>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python">from mitmproxy import ctx
+
+class RedirectFromTo:
+    def __init__(self):
+        self.num &#x3D; 0
+
+    def load(self, loader):
+        loader.add_option(
+            name&#x3D;&quot;redirect_from&quot;,
+            typespec&#x3D;str,
+            default&#x3D;&quot;&quot;,
+            help&#x3D;&quot;Host to redirect from&quot;,
+        )
+        loader.add_option(
+            name&#x3D;&quot;redirect_to&quot;,     
+            typespec&#x3D;str,   
+            default&#x3D;&quot;&quot;,
+            help&#x3D;&quot;Host to redirect to&quot;,          
+        )
+
+    def request(self, flow):
+        if (ctx.options.redirect_from !&#x3D; &quot;&quot;) and (ctx.options.redirect_to !&#x3D; &quot;&quot;) and (flow.request.host &#x3D;&#x3D; ctx.options.redirect_from):
+            flow.request.host &#x3D; ctx.options.redirect_to
+            flow.request.port &#x3D; 444
+
+addons &#x3D; [RedirectFromTo()]</code></pre>
+<p>This is a simple mitmproxy addon written in Python. It declares 2 options - <code>redirect_from</code> and <code>redirect_to</code> - and then, if both are passed, and the host of incoming request matches the value of <code>redirect_from</code>, it is substituted with <code>redirect_to</code>. Also, port is changed (hardcoded for now).</p>
+</li>
+<li><p>Save this file to <code>~/mitmproxy-addons/redirect-from-to.py</code>;</p>
+</li>
+<li><p>Run mitmproxy with addon:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mitmweb -s mitmproxy-addons&#x2F;redirect-from-to.py --set redirect_from&#x3D;&quot;api.myapp.com&quot; --set redirect_to&#x3D;&quot;localhost&quot; --ssl-insecure</code></pre>
+<p>If your API on localhost is not using HTTPS, or use self-signed certificate (which is most probably true) - <code>--ssl-insecure</code> option is required; else you can omit it. Now all requests to “api.myapp.com” should be redirected to localhost.</p>
+</li>
+</ol>
+<h3 id="modifying-requests"><a href="#modifying-requests" class="headerlink" title="Modifying requests"></a>Modifying requests</h3><p>If you need to modify all requests, you can use another addon script, as described in <a href="/android-emulator-with-local-api-https-en/" title="Setting up Android emulator to request API on localhost via HTTPS through Mitmproxy">previous post</a>.</p>
+<h3 id="conclusion"><a href="#conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h3><p>As you can see, it is not so hard to inspect, redirect and modify all the network interactions of your application. You do not even need to re-build it, you can use the production version. The only thing is that it can have short connection timeouts, and you will not be able to deeply debug your API, because connection will be lost. But you can always replay any request in your mitmweb panel, so this is not a big problem.<br>Do not forget to reset proxy settings on your mobile device after debugging :).</p>
+</div></article></div><a href="javascript:window.scrollTo({ top: 0, behavior: 'smooth' })" id="to-top"><span>↑ back to top</span></a></main></div></div><div class="giscus" id="comments"></div><footer><div class="copyright"><p>&copy; 2022 - 2023 Ilia Yatsenko<br>Powered by <a href="https://hexo.io/" rel="noreferrer" target="_blank">Hexo</a>, <a href="https://mailchimp.com/" rel="noreferrer" target="_blank">Mailchimp</a> and <a href="https://giscus.app/" rel="noreferrer" target="_blank">Giscus</a><br>Design inspired by <a href="https://github.com/tiaanduplessis/hexo-theme-brewski" rel="noreferrer" target="_blank">Brewski</a><br>Sources of this blog on  <a href="https://github.com/iliayatsenko/iliayatsenko.github.io" rel="noreferrer" target="_blank">Github</a></p></div></footer></div><!-- Giscus--><script src="https://giscus.app/client.js" data-repo="iliayatsenko/iliayatsenko.github.io" data-repo-id="R_kgDOHnmmlw" data-category="Announcements" data-category-id="DIC_kwDOHnmml84CYDR-" data-mapping="pathname" data-strict="1" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light_high_contrast" data-loading="lazy" data-lang="en" crossorigin="anonymous" async></script><!-- Other--><script>function toggleToTopBtn() {
+    var toTopBtn = document.getElementById('to-top');
+    if (toTopBtn === null) return;
+    if (window.innerHeight >= document.documentElement.scrollHeight) {
+        toTopBtn.style.display = 'none';
+    } else {
+        toTopBtn.style.display = 'block';
+    }
+}
+
+function showThanksForSubscriptionAlertIfSubscribed() {
+    if (window.location.hash === '#subscribed') {
+        alert('Thank you for your subscription!');
+        history.replaceState(null, null, ' ')
+    }
+}
+
+function commentsEnabled() {
+    let commentsEnabled = false;
+    const post = document.getElementsByClassName('post')[0];
+    if (post) {
+        commentsEnabled = post.dataset.commentsEnabled === '1' ? true : false;
+    }
+    return commentsEnabled;
+}
+
+function toggleComments() {
+    const comments = document.getElementsByClassName('giscus')[0];
+    if (commentsEnabled()) {
+        comments.style.display = 'block';
+    } else {
+        comments.style.display = 'none';
+    }
+}
+
+/*
+function updateCommentsOnTransition() {
+    if (!commentsEnabled()) return;
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    if (giscusIframe === null) return;
+    giscusIframe.contentWindow.postMessage(
+        {
+            giscus: {
+                setConfig: {
+                    term: window.location.pathname.replace(/^\//, ''),
+                    backLink: window.location.href + '?giscus-logged-in'
+                }
+            }
+        },
+        '*'
+    );
+}
+*/
+
+document.addEventListener('DOMContentLoaded', function() {
+    /*
+    Barba.Pjax.start();
+    Barba.Dispatcher.on('transitionCompleted', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        Prism.highlightAll();
+        toggleToTopBtn();
+        toggleComments();
+        updateCommentsOnTransition();
+    });
+    */
+
+    toggleToTopBtn();
+    showThanksForSubscriptionAlertIfSubscribed();
+    toggleComments();
+});</script></body></html>

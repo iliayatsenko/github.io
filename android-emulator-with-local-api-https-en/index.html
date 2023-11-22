@@ -1,0 +1,159 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index, follow"><meta name="google-site-verification" content="7Vxvzs1QobmcQElr_rNUddMrgaDuT2v1jJ-HMRWN9DU"><title>Setting up Android emulator to request API on localhost via HTTPS through Mitmproxy • Ilia's notes</title><meta name="description" content="Ilia's notes about software architecture, testability, and other, more mundane things"><link rel="icon" href="/journal-code.svg"><link rel="stylesheet" href="https://unpkg.com/nanoreset@3.0.1/nanoreset.min.css"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="Ilia's notes"><link rel="stylesheet" href="/css/prism.css"><script src="/js/prism.js"></script><meta name="generator" content="Hexo 6.3.0"></head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="Ilia's notes"><img class="logo-image" src="/journal-code.svg" alt="logo">Ilia's notes</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">BLOG</a></li><li class="nav-list-item"><a class="nav-list-link" href="/about" target="_self">ABOUT</a></li><li class="nav-list-item"><a class="nav-list-link" href="/links" target="_self">LINKS</a></li></ul></header><div id="barba-wrapper"><div class="barba-container"><main class="container"><div class="post" data-comments-enabled="1"><article class="post-block"><h1 class="post-title">Setting up Android emulator to request API on localhost via HTTPS through Mitmproxy</h1><div class="post-info">22.10.2023
+<a href="../categories/EN/" title="EN">
+<span class="cat-prefix">@</span>EN</a>
+<a href="../tags/android/" title="android">
+<span class="tag-prefix">#</span>android</a><a href="../tags/api/" title="api">
+<span class="tag-prefix">#</span>api</a><a href="../tags/https/" title="https">
+<span class="tag-prefix">#</span>https</a><a href="../tags/mitmproxy/" title="mitmproxy">
+<span class="tag-prefix">#</span>mitmproxy</a><a href="../tags/manual/" title="manual">
+<span class="tag-prefix">#</span>manual</a></div><div class="post-content"><p>Recently I needed to make some manual acceptance testing on Android application which talks to the API I am working on. For this purpose I installed Android Studio and set up Android emulator which makes requests to the API running in docker on local host. </p>
+<span id="more"></span>
+
+<p>But there was one major problem to solve: Android emulator requires HTTPS connection, with the SSL certificate it trusts. It was not easy to figure out all the “how?” and “why?” during solving this issue, so I decided to document my final solution here.</p>
+<h2 id="general-info-very-simplistic"><a href="#general-info-very-simplistic" class="headerlink" title="General info (very simplistic)"></a>General info (very simplistic)</h2><p>When you run Android emulator, the default IP address to connect to local host is 10.0.2.2. Because if you specify <code>localhost</code> or <code>127.0.0.1</code> it will lead to the Android device’s own local host. </p>
+<p>So, first of all we need to configure our API to support HTTPS. HTTPS connection requires SSL certificates, which guarantee the identities of communicating parties and is used to encrypt requests’ payload. These certificates are simple files, granted by Certificate Authorities (CA). CAs are the organisations trusted by all the communicating parties. SSL certificates can be derived from other certificates, i.e. “signed by”. In this process, certificate, used to sign by is “root”, and the one signed is “leaf”. The tree can be more than 1-level deep. The list of trusted top-most root certificates is “hard-coded” in each operating system. So, in order to make your browser or application to trust some SSL certificate, this certificate should be derived from one of these top-most root certificates. </p>
+<p>For use in production, you would need to contact CA to get certificate (usually they are paid). But for development, you can be a CA for yourself - use so-called “self-signed” certificates. The only problem with such certificates is that not all clients will trust them. For example, browsers will show the warning like “Your connection is not secure” when visiting site with self-signed certificate. Android emulator refuses such certificates too, by default.</p>
+<p>What we need to do is to create self-signed certificate and tell Android emulator that this certificate should be trusted.</p>
+<p>First of all, ensure that Android emulator trusts user-added certificates. If your app is debaggable (i.e. the build supports debug), ensure that there are such lines in the <code>network_security_config.xml</code> file in Android Studio:</p>
+<pre class="line-numbers language-markup" data-language="markup"><code class="language-markup">&lt;debug-overrides&gt;
+    &lt;trust-anchors&gt;
+        &lt;!-- Trust user added CAs while debuggable only --&gt;
+        &lt;certificates src&#x3D;&quot;user&quot; &#x2F;&gt;
+    &lt;&#x2F;trust-anchors&gt;
+&lt;&#x2F;debug-overrides&gt;</code></pre>
+<p>Else, if app is not debaggable, add following lines manually, to the topmost node:</p>
+<pre class="line-numbers language-markup" data-language="markup"><code class="language-markup">&lt;base-config&gt;
+    &lt;trust-anchors&gt;
+        &lt;certificates src&#x3D;&quot;user&quot;&#x2F;&gt;
+    &lt;&#x2F;trust-anchors&gt;
+&lt;&#x2F;base-config&gt;</code></pre>
+<p>Then follow the next steps.</p>
+<h2 id="simplest-setup"><a href="#simplest-setup" class="headerlink" title="Simplest setup"></a>Simplest setup</h2><h3 id="1-create-self-signed-certificate"><a href="#1-create-self-signed-certificate" class="headerlink" title="1. Create self-signed certificate"></a>1. Create self-signed certificate</h3><p>Note the <code>subjectAltName</code> - it is required to allow to use this certificate with connections that do not specify host name. Remember, Android emulator will connect to the raw IP 10.0.2.2.</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">openssl req \
+    -x509 -nodes -days 365 \
+    -newkey rsa:2048 \
+    -addext &quot;subjectAltName &#x3D; IP.1:10.0.2.2&quot; \
+    -keyout local_private.pem \
+    -out local_signed.pem</code></pre>
+<p>This will create two files: private and public keys. Usually, you should not expose your private key, but in development you can put both of them to the single file, by just appending the content of certificate with content of private key:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat local_private.pem &gt;&gt; local_signed.pem</code></pre>
+<h3 id="2-configure-your-local-server-to-use-this-certificate"><a href="#2-configure-your-local-server-to-use-this-certificate" class="headerlink" title="2. Configure your local server to use this certificate"></a>2. Configure your local server to use this certificate</h3><p>For Nginx, add these lines to the <code>server</code> block:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">listen 443 ssl;
+ssl_certificate &#x2F;Absolute&#x2F;path&#x2F;to&#x2F;local_signed.pem;
+ssl_certificate_key &#x2F;Absolute&#x2F;path&#x2F;to&#x2F;local_signed.pem;</code></pre>
+<p>Nginx understands the format when private and public keys are located in single file, and will expose only the private one to clients.</p>
+<p>Do not forget to reload nginx:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nginx -s reload</code></pre>
+
+<h3 id="3-copy-your-local-signed-pem-to-your-virtual-android-device"><a href="#3-copy-your-local-signed-pem-to-your-virtual-android-device" class="headerlink" title="3. Copy your local_signed.pem to your virtual Android device"></a>3. Copy your local_signed.pem to your virtual Android device</h3><p>In Android emulator you can just drag-n-drop file to the device. </p>
+<h3 id="4-install-your-certificate-on-your-device"><a href="#4-install-your-certificate-on-your-device" class="headerlink" title="4. Install your certificate on your device"></a>4. Install your certificate on your device</h3><p>To install on Android, open settings and search “certificates” -&gt; “Certificate management app” -&gt; “Install a certificate” -&gt; “CA certificate”. By the way, on iOS the installation is different: try to open the certificate file and after it says something like “Review profile in settings” go to Settings and select “Profile Downloaded” on the top of the settings’ list.</p>
+<h3 id="5-test"><a href="#5-test" class="headerlink" title="5. Test"></a>5. Test</h3><p>Now you can request localhost API from Android emulator using <a target="_blank" rel="noopener" href="https://10.0.2.2/">https://10.0.2.2</a>. Change the API host in the code (possibly, help of Android developer will be needed), re-build the app, and try to use your application.</p>
+<h2 id="with-mitmproxy"><a href="#with-mitmproxy" class="headerlink" title="With Mitmproxy"></a>With Mitmproxy</h2><p>So far so good, but we could go further and configure the HTTPS proxy for more convenient development. With proxy we will be able to inspect, intercept and modify all the requests made from application. Also, it will be possible to route requests to different servers (for example to QA server, instead of localhost) without changing API URL in application’s code and re-building it each time. </p>
+<p><strong>By the way, with proxy we do not even need to configure local API to support HTTPS, since the secured connection is required only between client and proxy, not between proxy and server.</strong></p>
+<p>The good option for proxy is open-sourced <a target="_blank" rel="noopener" href="https://mitmproxy.org/">Mitmproxy</a>. After installation (is trivial), here is how to configure it.</p>
+<h3 id="1-install-mitmproxy’s-ca-certificate-on-your-device"><a href="#1-install-mitmproxy’s-ca-certificate-on-your-device" class="headerlink" title="1. Install Mitmproxy’s CA certificate on your device"></a>1. Install Mitmproxy’s CA certificate on your device</h3><p>Mitmproxy goes with its own CA certificate. The file is located at <code>~/.mitmproxy/mitmproxy-ca.pem</code>. We need Android device to trust it, so should install it as described <a href="#4-install-your-certificate-on-your-device">earlier</a>.</p>
+<h3 id="2-create-a-certificate-to-use"><a href="#2-create-a-certificate-to-use" class="headerlink" title="2. Create a certificate to use"></a>2. Create a certificate to use</h3><p>Android emulator uses IP adress 10.0.2.2 to connect to host. And the problem is that Mitmproxy’s certificate is not associated with this IP (if it was, we could start using our API via proxy at this moment). The solution is to create a new certificate, signed by Mitmproxy’s one, and associate it with 10.0.2.2. Create file with options for self-signed certificate:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">echo &quot;subjectAltName &#x3D; IP.1:10.0.2.2&quot; &gt; android_options.txt</code></pre>
+
+<h3 id="3-create-a-certificate-signing-request"><a href="#3-create-a-certificate-signing-request" class="headerlink" title="3. Create a certificate signing request"></a>3. Create a certificate signing request</h3><p>Creating a “leaf” certificate involves 2 steps - creating signing request and actual signing. To create request:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">openssl req \
+    -nodes -new -newkey rsa:2048 \
+    -keyout mitm_private.pem \
+    -out mitm_req.pem</code></pre>
+<p>This command will ask you to provide some info about your “company”. You can leave all the asked fields empty, or provide some data if you want.</p>
+<h3 id="4-create-certificate-signed-by-mitmproxy’s-ca"><a href="#4-create-certificate-signed-by-mitmproxy’s-ca" class="headerlink" title="4. Create certificate signed by Mitmproxy’s CA"></a>4. Create certificate signed by Mitmproxy’s CA</h3><p>Now, create a signed certificate using your request and options in file:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">openssl x509 \
+    -req -in mitm_req.pem \
+    -days 365 \
+    -CA ~&#x2F;.mitmproxy&#x2F;mitmproxy-ca.pem \
+    -CAkey ~&#x2F;.mitmproxy&#x2F;mitmproxy-ca.pem \
+    -CAcreateserial -out mitm_signed.pem \
+    -extfile .&#x2F;android_options.txt</code></pre>
+<p>And append secret key to your certificate file (this is the format acceptable by mitmproxy):</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat mitm_private.pem &gt;&gt; mitm_signed.pem</code></pre>
+
+<h3 id="5-start-mitmproxy"><a href="#5-start-mitmproxy" class="headerlink" title="5. Start mitmproxy"></a>5. Start mitmproxy</h3><p>Now start your proxy with created certificate. Mitmproxy provides 3 similar tools - <code>mitmproxy</code>, <code>mitmweb</code> and <code>mitmdump</code>. For seeing all requests going through proxy on a page in browser we need <code>mitmweb</code>:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mitmweb --mode reverse:https:&#x2F;&#x2F;your.server.host --certs &quot;*&#x3D;&#x2F;Absolute&#x2F;path&#x2F;to&#x2F;mitm_signed.pem&quot;</code></pre>
+<p>If your destination server does not support HTTPS itself, or has self-signed certificate (which is true in our case), add <code>--ssl-insecure</code> option, which tells mitmproxy to not require connection to server to be secure:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mitmweb --mode reverse:https:&#x2F;&#x2F;your.server.host --ssl-insecure --certs &quot;*&#x3D;&#x2F;Absolute&#x2F;path&#x2F;to&#x2F;mitm_signed.pem&quot;</code></pre>
+
+<h3 id="6-test"><a href="#6-test" class="headerlink" title="6. Test"></a>6. Test</h3><p>Now you can request localhost API from Android emulator using <a target="_blank" rel="noopener" href="https://10.0.2.2:8080/">https://10.0.2.2:8080</a>. By default mitmproxy listens on 8080 port, change if you configured it to listen on another one. All the requests made will be available to inspect in Mitmweb panel at <a target="_blank" rel="noopener" href="http://127.0.0.1:81/">http://127.0.0.1:81</a>.</p>
+<h3 id="8-modify-all-requests-automatically"><a href="#8-modify-all-requests-automatically" class="headerlink" title="8. Modify all requests automatically"></a>8. Modify all requests automatically</h3><p>Now you can intercept and modify any request matching pattern (see field “Intercept” in the Mitmweb panel). But if you need to automatically modify all requests, e.g. to add Xdebug trigger to the queries, you can do it using Mitmproxy plugin (simple Python script). For example:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &lt;&lt;EOT &gt; ~&#x2F;mitmproxy-addons&#x2F;add-xdebug-session-param.py
+def request(flow) -&gt; None:
+    flow.request.query[&quot;XDEBUG_SESSION_START&quot;] &#x3D; &quot;1&quot;
+EOT</code></pre>
+<p>And restart mitmproxy with plugin:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mitmweb --mode reverse:https:&#x2F;&#x2F;your.server.host --certs &quot;*&#x3D;&#x2F;Absolute&#x2F;path&#x2F;to&#x2F;mitm_signed.pem&quot; -s ~&#x2F;mitmproxy-addons&#x2F;add-xdebug-session-param.py</code></pre>
+
+<h2 id="conclusion"><a href="#conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Configuring Android emulator with local API allows backend developers to understand the application on all the levels, not only on backend. But it requires at least basic understanding of how HTTPS works. Hope this manual will be helpful, please leave comments in case of questions or proposals.</p>
+</div></article></div><a href="javascript:window.scrollTo({ top: 0, behavior: 'smooth' })" id="to-top"><span>↑ back to top</span></a></main></div></div><div class="giscus" id="comments"></div><footer><div class="copyright"><p>&copy; 2022 - 2023 Ilia Yatsenko<br>Powered by <a href="https://hexo.io/" rel="noreferrer" target="_blank">Hexo</a>, <a href="https://mailchimp.com/" rel="noreferrer" target="_blank">Mailchimp</a> and <a href="https://giscus.app/" rel="noreferrer" target="_blank">Giscus</a><br>Design inspired by <a href="https://github.com/tiaanduplessis/hexo-theme-brewski" rel="noreferrer" target="_blank">Brewski</a><br>Sources of this blog on  <a href="https://github.com/iliayatsenko/iliayatsenko.github.io" rel="noreferrer" target="_blank">Github</a></p></div></footer></div><!-- Giscus--><script src="https://giscus.app/client.js" data-repo="iliayatsenko/iliayatsenko.github.io" data-repo-id="R_kgDOHnmmlw" data-category="Announcements" data-category-id="DIC_kwDOHnmml84CYDR-" data-mapping="pathname" data-strict="1" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light_high_contrast" data-loading="lazy" data-lang="en" crossorigin="anonymous" async></script><!-- Other--><script>function toggleToTopBtn() {
+    var toTopBtn = document.getElementById('to-top');
+    if (toTopBtn === null) return;
+    if (window.innerHeight >= document.documentElement.scrollHeight) {
+        toTopBtn.style.display = 'none';
+    } else {
+        toTopBtn.style.display = 'block';
+    }
+}
+
+function showThanksForSubscriptionAlertIfSubscribed() {
+    if (window.location.hash === '#subscribed') {
+        alert('Thank you for your subscription!');
+        history.replaceState(null, null, ' ')
+    }
+}
+
+function commentsEnabled() {
+    let commentsEnabled = false;
+    const post = document.getElementsByClassName('post')[0];
+    if (post) {
+        commentsEnabled = post.dataset.commentsEnabled === '1' ? true : false;
+    }
+    return commentsEnabled;
+}
+
+function toggleComments() {
+    const comments = document.getElementsByClassName('giscus')[0];
+    if (commentsEnabled()) {
+        comments.style.display = 'block';
+    } else {
+        comments.style.display = 'none';
+    }
+}
+
+/*
+function updateCommentsOnTransition() {
+    if (!commentsEnabled()) return;
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    if (giscusIframe === null) return;
+    giscusIframe.contentWindow.postMessage(
+        {
+            giscus: {
+                setConfig: {
+                    term: window.location.pathname.replace(/^\//, ''),
+                    backLink: window.location.href + '?giscus-logged-in'
+                }
+            }
+        },
+        '*'
+    );
+}
+*/
+
+document.addEventListener('DOMContentLoaded', function() {
+    /*
+    Barba.Pjax.start();
+    Barba.Dispatcher.on('transitionCompleted', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        Prism.highlightAll();
+        toggleToTopBtn();
+        toggleComments();
+        updateCommentsOnTransition();
+    });
+    */
+
+    toggleToTopBtn();
+    showThanksForSubscriptionAlertIfSubscribed();
+    toggleComments();
+});</script></body></html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index, follow"><meta name="google-site-verification" content="7Vxvzs1QobmcQElr_rNUddMrgaDuT2v1jJ-HMRWN9DU"><title>Programmerish password management • Ilia's notes</title><meta name="description" content="Ilia's notes about software architecture, testability, and other, more mundane things"><link rel="icon" href="/journal-code.svg"><link rel="stylesheet" href="https://unpkg.com/nanoreset@3.0.1/nanoreset.min.css"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="Ilia's notes"><link rel="stylesheet" href="/css/prism.css"><script src="/js/prism.js"></script><meta name="generator" content="Hexo 6.3.0"></head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="Ilia's notes"><img class="logo-image" src="/journal-code.svg" alt="logo">Ilia's notes</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">BLOG</a></li><li class="nav-list-item"><a class="nav-list-link" href="/about" target="_self">ABOUT</a></li><li class="nav-list-item"><a class="nav-list-link" href="/links" target="_self">LINKS</a></li></ul></header><div id="barba-wrapper"><div class="barba-container"><main class="container"><div class="post" data-comments-enabled="1"><article class="post-block"><h1 class="post-title">Programmerish password management</h1><div class="post-info">17.07.2023
+<a href="../categories/EN/" title="EN">
+<span class="cat-prefix">@</span>EN</a>
+<a href="../tags/manual/" title="manual">
+<span class="tag-prefix">#</span>manual</a><a href="../tags/password-management/" title="password-management">
+<span class="tag-prefix">#</span>password-management</a></div><div class="post-content"><p>Modern life without password manager is hard. In this article I will tell how I made it easier.</p>
+<span id="more"></span>
+
+<h2 id="the-problem"><a href="#the-problem" class="headerlink" title="The problem"></a>The problem</h2><p>You know all this stuff: endless repetitive restoring of passwords, having one password for all the cases, and getting annoyed when sites refuse to accept it again and again, then adding random symbols to the end, forgetting about them, and the same story again… I suffered for a long time because I was afraid of wrapping my head around new concepts and setting up new tools. But one day I decided to try one of the popular password managers. How did it end, read next.</p>
+<p>At first, I installed OnePassword and LastPass browser extensions and mobile (iOS) apps. I tried to store-retrieve several passwords and ran into complexity and strange behavior. For example, the extension’s popup suggesting passwords on inputs was constantly overlapped with a similar Chrome default popup, which I didn’t find a way to turn off.</p>
+<p>Management panels of these services were crowded with irrelevant details and many redundant features for me. Also, these services were too “engaging”, asking for a lot of attention all the time: popups, notifications, “upgrade to pro”, “free trial”, adorable gamified collecting of personal data, etc. Also, I didn’t understand how they work: there was no explanation or simplified diagram, only endless marketing proclamations about how secure they are.</p>
+<p>I can’t say that these tools are bad in any way, they are great and very popular. That was just not what I wanted. I wanted a minimalistic tool, understandable for me (at least superficially, I am not a security expert in any way). So I decided to return to my previous management style (or, rather, its absence).</p>
+<h2 id="solution"><a href="#solution" class="headerlink" title="Solution"></a>Solution</h2><p>But after some time I encountered a linux ‘pass’ utility. “This is salvation” - thought I after reading the short and clear <a target="_blank" rel="noopener" href="https://www.passwordstore.org/">description</a>. And it really was: now I am enjoying using it on all my devices.</p>
+<p>It is the simple console app to manage encrypted notes. Except basic operations like create, read, update, delete, it’s possible to sync your notes with remote git repository. Encryption is made using GPG key. Also, clients exist for all popular platforms.</p>
+<p>Think about GPG keys as an analog of SSH keys, but with some subtle differences. Anyway, they serve a similar task - securely sharing data between peers, and both are based on asymmetric encryption (public and private keys).</p>
+<p>But setup was not so easy, despite it absolutely was worth it. Here I describe what I’ve done, sequentially. If some steps are not relevant for you, just skip them.</p>
+<h4 id="setting-up-pass-on-ubuntu"><a href="#setting-up-pass-on-ubuntu" class="headerlink" title="Setting up pass on Ubuntu"></a>Setting up <code>pass</code> on Ubuntu</h4><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">sudo apt-get install pass</code></pre>
+
+<p>Then, it is needed to initialize it by passing the ID of GPG key. Here is how to <a href="#setting-up-gpg-keys">find GPG key ID</a>. After initialization, we can start <a href="#pass-usage">using <code>pass</code></a> locally, or set up <a href="#synchronization-with-remote-git-repository">synchronization with remote repository</a>.</p>
+<h4 id="setting-up-gpg-keys"><a href="#setting-up-gpg-keys" class="headerlink" title="Setting up GPG keys"></a>Setting up GPG keys</h4><p>Usually, one pair of GPG keys is already present in the system, but I preferred to generate a new one. Here are good manuals from Github about how to <a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/managing-commit-signature-verification/checking-for-existing-gpg-keys">find</a> or <a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/managing-commit-signature-verification/generating-a-new-gpg-key">generate new</a> GPG keys.</p>
+<p>By the way, some people recommend to <a href="#gpg-keys-to-qr-codes">make QR-codes from your GPG keys</a>, print these codes on paper and store them securely. I’ve done it, because in case of keys loss, it will be impossible to recover them, and all encrypted data will be lost. Here is how to <a href="#gpg-keys-to-qr-codes">make QR-codes from your GPG keys</a>.</p>
+<p>When we have GPG key ID in place, run:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pass init &lt;your GPG key ID&gt;</code></pre>
+
+<p>This setup is enough to <a href="#pass-usage">start using <code>pass</code></a> locally.</p>
+<h4 id="synchronization-with-remote-git-repository"><a href="#synchronization-with-remote-git-repository" class="headerlink" title="Synchronization with remote git repository"></a>Synchronization with remote git repository</h4><p>But we would like to sync passwords across devices, so we need to share our GPG keys to all of them and to set up git integration.</p>
+<p>Create a private git repository, name it somehow like “password-store”. Then run:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pass git init \
+    &amp;&amp; pass git remote add origin git@github.com:yourgithubname&#x2F;password-store.git \
+    &amp;&amp; pass git push -u --all</code></pre>
+
+<p>Now we can setup <code>pass</code> on other devices, like <a href="#set-up-for-ios">iOS</a> or <a href="#setup-for-mac">Mac</a>, and sync connect them to this repository and synchronize passwords.</p>
+<h4 id="set-up-for-ios"><a href="#set-up-for-ios" class="headerlink" title="Set up for iOS"></a>Set up for iOS</h4><p>Install application <a target="_blank" rel="noopener" href="https://mssun.github.io/passforios/">Pass for iOS</a>. And open it.</p>
+<p>Go to <code>Settings</code> → <code>PGP Key</code>. Here we can choose how to import PGP keys on your iPhone. PGP stands for “Pretty-Good-Privacy” and GPG stands for “GNU Privacy Guard”. As GPG is simply an open-source implementation of PGP, here we can use them interchangeably. I selected “ASCII-Armor Key” and it allowed me to paste the key as text or to scan QR-codes. I chose QR-codes, because it looks more secure than sending them as text via internet.  And here is <a href="#gpg-keys-to-qr-codes">how to create QR-codes</a> from your GPG keys. After creating QR-codes, open and scan them with your iPhone camera one by one.</p>
+<p>When both private and public GPG keys are imported on iPhone, we need to connect our Github repo. Go to Settings → Password Repository and fill in the fields with the following values:</p>
+<ul>
+<li>Git repository URL: <code>ssh://git@github.com/yourgithubname/password-store.git</code> (NOTE replacement of “:” with “&#x2F;”, original was <code>git@github.com:yourgithubname/password-store.git</code>),</li>
+<li>Username: <code>git</code>,</li>
+<li>Branch name: <code>&lt;name of your main branch&gt;</code>,</li>
+<li>Supported authentication Method: <code>SSH Key</code>.</li>
+</ul>
+<p>Now select <code>ASCII-Armor Key</code>. Then we need to import on your iPhone a private SSH key, which we use to access Github. I’ve chosen to scan them as QR-codes. Here are good manuals from Github about how to <a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh/checking-for-existing-ssh-keys">find</a> or <a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent">generate new</a> SSH keys, and how to <a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account">add them to your Github account</a>. </p>
+<p>After your key (new or existing one) is added to your Github, generate QR-code from your private SSH key:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cd ~&#x2F;.ssh &amp;&amp; \
+    qrencode -r id_rsa -o id_rsa.png</code></pre>
+
+<p>Open id_rsa.png image and scan it with your iPhone camera. SSH key is imported. Do not forget to delete sensitive files safely:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shred id_rsa.png \
+    &amp;&amp; rm id_rsa.png</code></pre>
+
+<p>Now we can switch to Passwords pane, swipe down, and all your passwords will be synced with the remote repository. Congratulations!</p>
+<h4 id="setup-for-mac"><a href="#setup-for-mac" class="headerlink" title="Setup for Mac"></a>Setup for Mac</h4><p>On macbook to install <code>pass</code>, run this:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">brew install pass</code></pre>
+
+<p>Then we need to <a href="#setting-up-gpg-keys">setup GPG keys</a>. After that we can start <a href="#pass-usage">using <code>pass</code> locally</a>, or <a href="#synchronization-with-remote-git-repository">sync with remote git repository</a>.</p>
+<p>But I’ve started on Ubuntu, so I’ve got my GPG keys there. Now I need to import them on Mac somehow. If both your Ubuntu and Mac computers are connected to the same network, the easiest way to do this is <a href="#sharing-gpg-keys-via-ssh-in-local-network">via SSH in local network</a>.</p>
+<h4 id="sharing-gpg-keys-via-ssh-in-the-local-network"><a href="#sharing-gpg-keys-via-ssh-in-the-local-network" class="headerlink" title="Sharing GPG keys via SSH in the local network"></a>Sharing GPG keys via SSH in the local network</h4><p> To share GPG keys between two computers inside the local network we need to set up SSH server on one computer and <code>scp</code> needed files on another computer. In this example we will share GPG keys from Ubuntu to Mac.</p>
+<p> Ubuntu side run this:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">sudo apt install openssh-server \
+    &amp;&amp; sudo ufw allow ssh</code></pre>
+
+<p>Then to know your IP in local network:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ip address | grep wl</code></pre>
+
+<p>The command above will print something like <code>3: wlp0s20f3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default qlen 1000 inet 192.168.0.122/24 brd 192.168.0.255 scope global dynamic noprefixroute wlp0s20f3</code>, where <code>192.168.0.122</code> is your IP in local network.</p>
+<p>Now we need to dump our public and private GPG keys to files:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">gpg --armor --export-secret-key --output secret.asc &lt;your GPG key ID&gt; \
+    &amp;&amp; gpg --armor --export --output public.asc &lt;your GPG key ID&gt;</code></pre>
+
+<p>Then, on Mac run these commands to copy GPG keys via <code>scp</code> utility:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">scp &lt;your Ubuntu user name&gt;@&lt;your Ubuntu IP in local network&gt;:&#x2F;absolute&#x2F;path&#x2F;to&#x2F;public.asc public.asc</code></pre>
+<p>and for secret key:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">scp &lt;your Ubuntu user name&gt;@&lt;your Ubuntu IP in local network&gt;:&#x2F;absolute&#x2F;path&#x2F;to&#x2F;secret.asc secret.asc</code></pre>
+
+<p>These commands possibly will ask for the password of your Ubuntu user, and then copy private key from Ubuntu to Mac in current directory.</p>
+<p>After this we need to import GPG keys from the received files:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">gpg --import secret.asc \
+    &amp;&amp; gpg --import public.asc</code></pre>
+
+<p>Now to check if keys imported:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">gpg --list-keys</code></pre>
+
+<p>The command above should list all GPG keys, where the one with the same ID as on Ubuntu should be present.</p>
+<p>Now init <code>pass</code> and <code>git</code>:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pass init &lt;your GPG key ID from Ubuntu system&gt; \
+    &amp;&amp; pass git init</code></pre>
+
+<p>Now add your repository:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pass git remote add origin git@github.com:yourgithubname&#x2F;password-store.git</code></pre>
+
+<p>If your Mac can access your Github, now you can run</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pass git pull</code></pre>
+<p>And all the data will be pulled from the repository.</p>
+<p>But to make your Mac able to access your Github, possibly you will need add it’s SSH key to the account.</p>
+<p>Do not forget to safely delete sensitive files both on Ubuntu and on Mac:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shred secret.asc public.asc \
+    &amp;&amp; rm secret.asc public.asc</code></pre>
+
+<p>And maybe deny further SSH connections on Ubuntu:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">sudo ufw deny ssh</code></pre>
+
+<h4 id="gpg-keys-to-qr-codes"><a href="#gpg-keys-to-qr-codes" class="headerlink" title="GPG keys to QR-codes"></a>GPG keys to QR-codes</h4><p>As the whole key don’t fit into the amount of data which QR-code can transmit, we will need to split it on parts, and generate a sequence of QR-codes. Firstly, let’s generate QR-codes for the private key.</p>
+<p>We need to dump the key into the temporary file.</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">gpg --armor --export-secret-key --output secret.asc &lt;your GPG key ID&gt;</code></pre>
+<p>We will use <code>qrencode</code> utility which is already available on Ubuntu (if not, install it with <code>sudo apt install qrencode</code>).</p>
+<p>We could try to run simply:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qrencode -o secret.png &lt; secret.asc</code></pre>
+
+<p>But probably we will get this error “Failed to encode the input data: Input data too large”.</p>
+<p>So, we need to split the file into several parts, and generate QR-code from each of them.</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">split -C 1000 secret.asc secret.asc-</code></pre>
+
+<p>Then we can generate QR-codes from each part with:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">for i in secret.asc-*; do qrencode -o &quot;$&#123;i&#125;.png&quot; &lt; &quot;$&#123;i&#125;&quot;; done</code></pre>
+
+<p>This will produce several PNG images, named somehow like this: <code>secret.asc-aa.png</code>, <code>secret.asc-ab.png</code>, <code>secret. asc-ac.png</code>, etc. Now we can print them (do not mix them up, order matters!) and store securely. After printing or scanning them, do not forget to delete them</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shred secret.asc secret.asc-* \
+    &amp;&amp; rm secret.asc secret.asc-*</code></pre>
+
+<p>And for public one the process is similar:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">gpg --armor --export --output public.asc &lt;your GPG key ID&gt; \
+    &amp;&amp; split -C 1000 public.asc public.asc- \
+    &amp;&amp; for i in public.asc-*; do qrencode -o &quot;$&#123;i&#125;.png&quot; &lt; &quot;$&#123;i&#125;&quot;; done</code></pre>
+
+<p>Scan or store QR-codes and delete files and generated images after that:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shred public.asc public.asc-* &amp;&amp; rm public.asc public.asc-*</code></pre>
+
+<h4 id="pass-usage"><a href="#pass-usage" class="headerlink" title="Pass usage"></a>Pass usage</h4><p>Pass usage is pretty simple.<br>For example, to generate a new password, store it and copy to the clipboard, simply run</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pass generate -c &lt;password name&gt;</code></pre>
+<p>and newly generated password will be copied to the clipboard. It will be automatically removed from there after 45 seconds.</p>
+<p>To copy password to the clipboard, run</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pass -c &lt;password name&gt;</code></pre>
+<p>and password will be copied to the clipboard and automatically removed from there after 45 seconds.</p>
+<p>After setting up the <a href="#synchronization-with-remote-git-repository">synchronization with a remote repository</a>, in order to sync your passwords, run</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pass git push</code></pre>
+<p>or</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pass git pull</code></pre>
+
+<p>More examples about how to use <code>pass</code> can be found on <a target="_blank" rel="noopener" href="https://git.zx2c4.com/password-store/about/">man page</a>.</p>
+</div></article></div><a href="javascript:window.scrollTo({ top: 0, behavior: 'smooth' })" id="to-top"><span>↑ back to top</span></a></main></div></div><div class="giscus" id="comments"></div><footer><div class="copyright"><p>&copy; 2022 - 2023 Ilia Yatsenko<br>Powered by <a href="https://hexo.io/" rel="noreferrer" target="_blank">Hexo</a>, <a href="https://mailchimp.com/" rel="noreferrer" target="_blank">Mailchimp</a> and <a href="https://giscus.app/" rel="noreferrer" target="_blank">Giscus</a><br>Design inspired by <a href="https://github.com/tiaanduplessis/hexo-theme-brewski" rel="noreferrer" target="_blank">Brewski</a><br>Sources of this blog on  <a href="https://github.com/iliayatsenko/iliayatsenko.github.io" rel="noreferrer" target="_blank">Github</a></p></div></footer></div><!-- Giscus--><script src="https://giscus.app/client.js" data-repo="iliayatsenko/iliayatsenko.github.io" data-repo-id="R_kgDOHnmmlw" data-category="Announcements" data-category-id="DIC_kwDOHnmml84CYDR-" data-mapping="pathname" data-strict="1" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light_high_contrast" data-loading="lazy" data-lang="en" crossorigin="anonymous" async></script><!-- Other--><script>function toggleToTopBtn() {
+    var toTopBtn = document.getElementById('to-top');
+    if (toTopBtn === null) return;
+    if (window.innerHeight >= document.documentElement.scrollHeight) {
+        toTopBtn.style.display = 'none';
+    } else {
+        toTopBtn.style.display = 'block';
+    }
+}
+
+function showThanksForSubscriptionAlertIfSubscribed() {
+    if (window.location.hash === '#subscribed') {
+        alert('Thank you for your subscription!');
+        history.replaceState(null, null, ' ')
+    }
+}
+
+function commentsEnabled() {
+    let commentsEnabled = false;
+    const post = document.getElementsByClassName('post')[0];
+    if (post) {
+        commentsEnabled = post.dataset.commentsEnabled === '1' ? true : false;
+    }
+    return commentsEnabled;
+}
+
+function toggleComments() {
+    const comments = document.getElementsByClassName('giscus')[0];
+    if (commentsEnabled()) {
+        comments.style.display = 'block';
+    } else {
+        comments.style.display = 'none';
+    }
+}
+
+/*
+function updateCommentsOnTransition() {
+    if (!commentsEnabled()) return;
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    if (giscusIframe === null) return;
+    giscusIframe.contentWindow.postMessage(
+        {
+            giscus: {
+                setConfig: {
+                    term: window.location.pathname.replace(/^\//, ''),
+                    backLink: window.location.href + '?giscus-logged-in'
+                }
+            }
+        },
+        '*'
+    );
+}
+*/
+
+document.addEventListener('DOMContentLoaded', function() {
+    /*
+    Barba.Pjax.start();
+    Barba.Dispatcher.on('transitionCompleted', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        Prism.highlightAll();
+        toggleToTopBtn();
+        toggleComments();
+        updateCommentsOnTransition();
+    });
+    */
+
+    toggleToTopBtn();
+    showThanksForSubscriptionAlertIfSubscribed();
+    toggleComments();
+});</script></body></html>

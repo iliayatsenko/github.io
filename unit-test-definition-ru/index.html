@@ -1,0 +1,201 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index, follow"><meta name="google-site-verification" content="7Vxvzs1QobmcQElr_rNUddMrgaDuT2v1jJ-HMRWN9DU"><title>Определение unit-теста • Ilia's notes</title><meta name="description" content="Ilia's notes about software architecture, testability, and other, more mundane things"><link rel="icon" href="/journal-code.svg"><link rel="stylesheet" href="https://unpkg.com/nanoreset@3.0.1/nanoreset.min.css"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="Ilia's notes"><link rel="stylesheet" href="/css/prism.css"><script src="/js/prism.js"></script><meta name="generator" content="Hexo 6.3.0"></head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="Ilia's notes"><img class="logo-image" src="/journal-code.svg" alt="logo">Ilia's notes</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">BLOG</a></li><li class="nav-list-item"><a class="nav-list-link" href="/about" target="_self">ABOUT</a></li><li class="nav-list-item"><a class="nav-list-link" href="/links" target="_self">LINKS</a></li></ul></header><div id="barba-wrapper"><div class="barba-container"><main class="container"><div class="post" data-comments-enabled="1"><article class="post-block"><h1 class="post-title">Определение unit-теста</h1><div class="post-info">06.06.2022
+<a href="../categories/RU/" title="RU">
+<span class="cat-prefix">@</span>RU</a>
+<a href="../tags/unit-tests/" title="unit-tests">
+<span class="tag-prefix">#</span>unit-tests</a></div><div class="post-content"><p>Исторически сложилось два взгляда на то, что из себя должен представлять unit-тест: </p>
+<ul>
+<li><strong>“лондонская школа”</strong> (или “мокистский” подход),</li>
+<li><strong>“детройтская школа”</strong> (или “классический” подход).</li>
+</ul>
+<span id="more"></span>
+
+<p>И тот и другой подход сходятся в том, что “юниты” должны быть изолированы. Принципиальное различие в том что именно понимать под “юнитом” и от чего именно изолировать. </p>
+<p>“Мокисты” считают юнитом <strong>единицу кода</strong> (чаще всего - один конкретный класс), а “классики” - <strong>единицу поведения, или “фичу”</strong> (модуль из одного или нескольких классов). ****“Мокисты” считают что каждый юнит должен тестироваться в изоляции от других юнитов, а “классики” - что каждая фича должна тестироваться в изоляции от меж-процессных взаимодействий (то есть тесты не должны полагаться на что-то “извне” запущенного процесса - системное время, базу данных, файловую систему, БД, сеть и т.д.).</p>
+<p>Например, имеем фичу “Машина”. Машина имеет стартовую цену и запас хода двигателя. Машина может ехать пока количество пройденных километров не превысит 300 000, при этом теряя в стоимости 0.01% на каждый километр пути. Допустим, мы написали код так:</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php">class Car
+&#123;
+    private Engine $engine;
+
+    private float $currentPrice;
+
+    public function __construct(Engine $engine, float $startPrice)
+    &#123;
+        $this-&gt;engine &#x3D; $engine;
+        $this-&gt;currentPrice &#x3D; $startPrice;
+    &#125;
+
+    public function run(int $kilometers)
+    &#123;
+        $this-&gt;engine-&gt;run($kilometers);
+
+        $this-&gt;currentPrice -&#x3D; ($kilometers * $this-&gt;currentPrice &#x2F; 10000);
+    &#125;
+
+    public function getCurrentPrice()
+    &#123;
+        return $this-&gt;currentPrice;
+    &#125;
+&#125;
+
+class Engine
+&#123;
+    const MAX_KILOMETERS &#x3D; 300_000;
+
+    private int $counter &#x3D; 0;
+
+    public function run(int $kilometers)
+    &#123;
+        if ($this-&gt;counter &gt; self::MAX_KILOMETERS) &#123;
+            throw new MaintenanceRequiredException();
+        &#125;
+
+        $this-&gt;counter +&#x3D; $kilometers;
+
+        echo &#39;Drrruuummmm!!!&#39;;
+    &#125;
+&#125;</code></pre>
+
+<p>“Мокисты” рассматривают <code>Car</code> и <code>Engine</code> как два отдельных юнита и стремятся к соответствию “один класс &#x3D; один тест”. Все зависимости тестируемого в данный момент класса заменяются моками:</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php">&#x2F;&#x2F; mockists&#39; unit-test
+
+&#x2F;&#x2F; CarTest.php
+
+function test_car_becomes_cheaper()
+&#123;
+    &#x2F;&#x2F; Cоздаем мок для Engine, ибо сейчас тестируем только Car
+    $engineMock &#x3D; Mock::create(Engine::class);
+
+    $startPrice &#x3D; 10_000;
+
+    $car &#x3D; new Car($engineMock, $startPrice);
+
+    $car-&gt;run(1000);
+
+    assertEquals(9990, $car-&gt;getCurrentPrice());
+
+        &#x2F;&#x2F; также надо проверять что Car правильно взаимодействоал с Engine
+        $engineMock-&gt;assertCalledOnce(&#39;run&#39;, [1000]);
+&#125;
+
+&#x2F;&#x2F; EngineTest.php
+
+function test_engine_cannot_run_more_than_300_000()
+&#123;
+    &#x2F;&#x2F; Теперь тестируем только Engine
+    $engine &#x3D; new Engine();
+
+    expectException(MaintenanceRequiredException::class);
+
+    $engine-&gt;run(300_001);
+&#125;</code></pre>
+
+<p>А для “классиков” здесь будет один юнит - <code>Car</code> , так как именно <code>Car</code> реализует интересующее нас поведение. А <code>Engine</code> - это подробности реализации этого поведения, для него отдельный тест не пишется:</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php">&#x2F;&#x2F; CarTest.php
+
+function test_car_becomes_cheeper()
+&#123;
+    $startPrice &#x3D; 10_000;
+    
+        &#x2F;&#x2F; Тестируем Car целиком, как единицу поведения.
+    $car &#x3D; new Car(new Engine(), $startPrice);
+
+    $car-&gt;run(1000);
+
+    assertEquals(9990, $car-&gt;getCurrentPrice());
+&#125;
+
+function test_car_cannot_run_more_than_300_000()
+&#123;
+        &#x2F;&#x2F; меж-классовые взаимодействия не проверям, 
+        &#x2F;&#x2F; рассматриваем фичу как одно целое
+    $car &#x3D; new Car(new Engine(), 10_000);
+
+    expectException(MaintenanceRequiredException::class);
+    
+    $car-&gt;run(300_001);
+&#125;</code></pre>
+
+<p>При таком подходе соответствия “один класс &#x3D; один тест” не будет. А моки нужны только для замены классов, обеспечивающих меж-процессные взаимодействия (например, репозиториев, или сетевых клиентов), т.е. <a target="_blank" rel="noopener" href="https://www.notion.so/f679b40f4fe846439679865e6dc35dac?pvs=21">инфраструктурного кода</a>. Про <a target="_blank" rel="noopener" href="https://www.notion.so/11466bd83e20420b8bbb1906927cb014?pvs=21">виды моков</a> - в другой раз.</p>
+<p>Оба подхода имеют свои плюсы и минусы.</p>
+<p><strong>“Лондонская школа”</strong></p>
+<p> +++ Легче определить причину падения тестов: просто смотрим в тот класс, чей тест упал.</p>
+<p> +++ Легко создавать инстансы тестируемых классов, просто мокая все зависимости.</p>
+<p> — Из-за обилия моков и проверок меж-классовых взаимодействий тесты становятся более “хрупкие”, то есть завязанные<br>   на внутренне устройство фичи. При малейшем рефакторинге придется править много тестов.</p>
+<p> — Тесты описывают ожидания очень гранулировано. Читая их, трудно понять требования к системе в целом, есть риск<br> “не увидеть леса за деревьями”. </p>
+<p> — Требуются вспомогательные библиотеки для создания моков.</p>
+<p><strong>“Детройтская школа”</strong></p>
+<p> +++ Так как тестируем только наблюдаемое извне поведение фичи, достигается наилучшее соотношение “защита от багов &#x2F; трудозатраты на поддержку тестов”. Внутри фичу можно рефакторить по-всякому - например вынести счетчик километров в отдельный класс, если логика расчетов усложнится, и т.д - тесты при этом править не придется.</p>
+<p> +++ Тесты одновременно являются своеобразной документацией, так как описывают ожидания от системы в целом, используя формулировки более приближенные к реальному ТЗ. </p>
+<p> — При падении тестов не сразу ясно в каком именно месте причина, так как в тесте задействуется сразу несколько<br> реальных классов.</p>
+<p> — В тестах нужно создавать полноценные инстансы со всеми зависимыми объектами, что может быть непростой задачей и<br> потребовать вспомогательных методов-фабрик.</p>
+<p>Лично я в этом плане разделяю предпочтения В.Хорикова - автора книги про юнит-тестирование - и пишу тесты в классическом стиле, с минимальным количеством моков. Больше информации по теме можно найти в его статье на <a target="_blank" rel="noopener" href="https://habr.com/ru/company/jugru/blog/571126/">Хабре</a> или в <a target="_blank" rel="noopener" href="https://www.amazon.com/gp/product/1617296279">самой книге</a>.</p>
+</div></article></div><a href="javascript:window.scrollTo({ top: 0, behavior: 'smooth' })" id="to-top"><span>↑ back to top</span></a></main></div></div><div class="giscus" id="comments"></div><footer><div class="copyright"><p>&copy; 2022 - 2023 Ilia Yatsenko<br>Powered by <a href="https://hexo.io/" rel="noreferrer" target="_blank">Hexo</a>, <a href="https://mailchimp.com/" rel="noreferrer" target="_blank">Mailchimp</a> and <a href="https://giscus.app/" rel="noreferrer" target="_blank">Giscus</a><br>Design inspired by <a href="https://github.com/tiaanduplessis/hexo-theme-brewski" rel="noreferrer" target="_blank">Brewski</a><br>Sources of this blog on  <a href="https://github.com/iliayatsenko/iliayatsenko.github.io" rel="noreferrer" target="_blank">Github</a></p></div></footer></div><!-- Giscus--><script src="https://giscus.app/client.js" data-repo="iliayatsenko/iliayatsenko.github.io" data-repo-id="R_kgDOHnmmlw" data-category="Announcements" data-category-id="DIC_kwDOHnmml84CYDR-" data-mapping="pathname" data-strict="1" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light_high_contrast" data-loading="lazy" data-lang="en" crossorigin="anonymous" async></script><!-- Other--><script>function toggleToTopBtn() {
+    var toTopBtn = document.getElementById('to-top');
+    if (toTopBtn === null) return;
+    if (window.innerHeight >= document.documentElement.scrollHeight) {
+        toTopBtn.style.display = 'none';
+    } else {
+        toTopBtn.style.display = 'block';
+    }
+}
+
+function showThanksForSubscriptionAlertIfSubscribed() {
+    if (window.location.hash === '#subscribed') {
+        alert('Thank you for your subscription!');
+        history.replaceState(null, null, ' ')
+    }
+}
+
+function commentsEnabled() {
+    let commentsEnabled = false;
+    const post = document.getElementsByClassName('post')[0];
+    if (post) {
+        commentsEnabled = post.dataset.commentsEnabled === '1' ? true : false;
+    }
+    return commentsEnabled;
+}
+
+function toggleComments() {
+    const comments = document.getElementsByClassName('giscus')[0];
+    if (commentsEnabled()) {
+        comments.style.display = 'block';
+    } else {
+        comments.style.display = 'none';
+    }
+}
+
+/*
+function updateCommentsOnTransition() {
+    if (!commentsEnabled()) return;
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    if (giscusIframe === null) return;
+    giscusIframe.contentWindow.postMessage(
+        {
+            giscus: {
+                setConfig: {
+                    term: window.location.pathname.replace(/^\//, ''),
+                    backLink: window.location.href + '?giscus-logged-in'
+                }
+            }
+        },
+        '*'
+    );
+}
+*/
+
+document.addEventListener('DOMContentLoaded', function() {
+    /*
+    Barba.Pjax.start();
+    Barba.Dispatcher.on('transitionCompleted', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        Prism.highlightAll();
+        toggleToTopBtn();
+        toggleComments();
+        updateCommentsOnTransition();
+    });
+    */
+
+    toggleToTopBtn();
+    showThanksForSubscriptionAlertIfSubscribed();
+    toggleComments();
+});</script></body></html>

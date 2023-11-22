@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index, follow"><meta name="google-site-verification" content="7Vxvzs1QobmcQElr_rNUddMrgaDuT2v1jJ-HMRWN9DU"><title>Быстрое профилирование • Ilia's notes</title><meta name="description" content="Ilia's notes about software architecture, testability, and other, more mundane things"><link rel="icon" href="/journal-code.svg"><link rel="stylesheet" href="https://unpkg.com/nanoreset@3.0.1/nanoreset.min.css"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="Ilia's notes"><link rel="stylesheet" href="/css/prism.css"><script src="/js/prism.js"></script><meta name="generator" content="Hexo 6.3.0"></head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="Ilia's notes"><img class="logo-image" src="/journal-code.svg" alt="logo">Ilia's notes</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">BLOG</a></li><li class="nav-list-item"><a class="nav-list-link" href="/about" target="_self">ABOUT</a></li><li class="nav-list-item"><a class="nav-list-link" href="/links" target="_self">LINKS</a></li></ul></header><div id="barba-wrapper"><div class="barba-container"><main class="container"><div class="post" data-comments-enabled="1"><article class="post-block"><h1 class="post-title">Быстрое профилирование</h1><div class="post-info">09.06.2022
+<a href="../categories/RU/" title="RU">
+<span class="cat-prefix">@</span>RU</a>
+<a href="../tags/php/" title="php">
+<span class="tag-prefix">#</span>php</a><a href="../tags/performance/" title="performance">
+<span class="tag-prefix">#</span>performance</a></div><div class="post-content"><p>Как по-быстрому проверить нет ли в PHP-коде очевидных просадок по производительности?</p>
+<span id="more"></span>
+
+<p>Нам понадобится: установленный xdebug (версия 3, для версии 2 будут другие названия параметров в php.ini), браузер или phpStorm, опционально docker.</p>
+<p>Включаем режим профилирования в xdebug. Для этого в php.ini добавляем это:</p>
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">xdebug.mode&#x3D;profile # или debug,profile, если хотим комбинированный режим</code></pre>
+
+<p>и это:</p>
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">xdebug.output_dir&#x3D;&#x2F;var&#x2F;profiling # куда писать файлы с результатами
+xdebug.use_compression&#x3D;false # не архивировать файлы
+xdebug.profiler_output_name&#x3D;cachegrind.out.%H.%R # шаблон имен файлов </code></pre>
+
+<p>, где <code>/var/profiling</code> - абсолютный путь к папке, куда профайлер будет складывать результаты работы. Если проект в докере, эта папка должна быть доступна с хоста. Для этого удобно поместить её где-то внутри папки приложения, т.к. папка приложения в процессе разработки уже, как правило, маппится в докер-контейнер. А для того чтоб созданные файлы не добавлялись в git, можно поместить эту папку внутрь какой-то уже добавленной в .gitignore, например, <code>var</code> или <code>runtime</code>.  Путь должен быть абсолютным внутри контейнера, то есть если у нас папка проекта <code>/home/user/myapp</code> маппится на <code>/var/www</code> в докер-контейнере, то надо указать <code>/var/www/var/profiling</code>. </p>
+<p>Создаем папку и даем права на запись:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mkdir &#x2F;home&#x2F;user&#x2F;myapp&#x2F;var&#x2F;profiling \
+	&amp;&amp; chmod -R 777 &#x2F;home&#x2F;user&#x2F;myapp&#x2F;var&#x2F;profiling</code></pre>
+
+<p>Перезапускаем PHP-FPM. Если он докеризирован, это проще всего сделать так:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">docker exec -u root my_phpfpm_container_name bash -c &quot;kill -USR2 1&quot;</code></pre>
+
+<p>После этого запускаем приложение и убеждаемся что в указанной папке появился файл вида <code>cachegrind.out...</code>. Прочитать этот файл можно разными средствами, проще всего - в <strong>PhpStorm</strong> или с помощью <strong>webgrind</strong>.</p>
+<p><strong>PhpStorm</strong></p>
+<p>Tools → Analyze Xdebug Profiler Snapshot… → выбираем нужный файл из результатов профайлинга и изучаем.</p>
+<p> <strong>Webgrind</strong></p>
+<p>Удобный докеризированный web-интерфейс: <a target="_blank" rel="noopener" href="https://github.com/jokkedk/webgrind">https://github.com/jokkedk/webgrind</a>. Запускаем так:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">docker run --rm -v &#x2F;home&#x2F;user&#x2F;myapp&#x2F;var&#x2F;profiling:&#x2F;tmp -p 8089:80 jokkedk&#x2F;webgrind:latest</code></pre>
+
+<p>, где <code>/home/user/myapp/var/profiling</code> и <code>8089</code> - путь к папке с результатами профайлинга на хосте и порт, на котром поднимать web-интерфейс. </p>
+<p>Переходим на <code>http://localhost:8089</code>, выбираем нужный файл и изучаем. По умолчанию webgrind сканирует файлы, чьи имена начинаются на <code>cachegrind.out</code> и я не нашел способа это изменить, поэтому нужно чтоб значение <code>xdebug.profiler_output_name</code> в php.ini имело такой префикс (по умолчанию оно его имеет).</p>
+<p><strong>Как анализировать результаты</strong></p>
+<p>Результат профайлинга представляет собой список вызовов функций и методов. Для каждого из вызовов показывается:</p>
+<ul>
+<li>сколько раз он был выполнен (<strong>calls</strong>),</li>
+<li>сколько времени занял, включая вложенные вызовы (<strong>inclusive time</strong> или просто time)</li>
+<li>сколько времени занял, не включая вложенные вызовы <strong>(exclusive time</strong> или own time),</li>
+<li>методы и функции, из которых делался этот вызов (<strong>callers</strong>),</li>
+<li>методы и функции, вызванные из этого вызова (вложенные, <strong>callee</strong>).</li>
+</ul>
+<p>Для поверхностного анализа узких мест достсточно отсортировать вызовы по убыванию по <strong>exclusive time</strong> и мы увидим самые “тяжелые” методы, с информацией о том, откуда и сколько раз они были вызваны. Также полезно отсортировать вызовы по убыванию по количеству <strong>(calls)</strong> - так можно заметить места в коде, которые можно оптимизировать путем кеширования результатов предыдущих вызовов.</p>
+<p>Весь процесс занимает несколько минут и позволяет убедиться что написанный код не содержит каких-то очевидных завтыков, например “тяжелых” вызовов в цикле, лишних запросов к базе данных и т.д.</p>
+<p>Рекомендую выполнять такую проверку для всего относительно сложного нового кода перед деплоем.</p>
+</div></article></div><a href="javascript:window.scrollTo({ top: 0, behavior: 'smooth' })" id="to-top"><span>↑ back to top</span></a></main></div></div><div class="giscus" id="comments"></div><footer><div class="copyright"><p>&copy; 2022 - 2023 Ilia Yatsenko<br>Powered by <a href="https://hexo.io/" rel="noreferrer" target="_blank">Hexo</a>, <a href="https://mailchimp.com/" rel="noreferrer" target="_blank">Mailchimp</a> and <a href="https://giscus.app/" rel="noreferrer" target="_blank">Giscus</a><br>Design inspired by <a href="https://github.com/tiaanduplessis/hexo-theme-brewski" rel="noreferrer" target="_blank">Brewski</a><br>Sources of this blog on  <a href="https://github.com/iliayatsenko/iliayatsenko.github.io" rel="noreferrer" target="_blank">Github</a></p></div></footer></div><!-- Giscus--><script src="https://giscus.app/client.js" data-repo="iliayatsenko/iliayatsenko.github.io" data-repo-id="R_kgDOHnmmlw" data-category="Announcements" data-category-id="DIC_kwDOHnmml84CYDR-" data-mapping="pathname" data-strict="1" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light_high_contrast" data-loading="lazy" data-lang="en" crossorigin="anonymous" async></script><!-- Other--><script>function toggleToTopBtn() {
+    var toTopBtn = document.getElementById('to-top');
+    if (toTopBtn === null) return;
+    if (window.innerHeight >= document.documentElement.scrollHeight) {
+        toTopBtn.style.display = 'none';
+    } else {
+        toTopBtn.style.display = 'block';
+    }
+}
+
+function showThanksForSubscriptionAlertIfSubscribed() {
+    if (window.location.hash === '#subscribed') {
+        alert('Thank you for your subscription!');
+        history.replaceState(null, null, ' ')
+    }
+}
+
+function commentsEnabled() {
+    let commentsEnabled = false;
+    const post = document.getElementsByClassName('post')[0];
+    if (post) {
+        commentsEnabled = post.dataset.commentsEnabled === '1' ? true : false;
+    }
+    return commentsEnabled;
+}
+
+function toggleComments() {
+    const comments = document.getElementsByClassName('giscus')[0];
+    if (commentsEnabled()) {
+        comments.style.display = 'block';
+    } else {
+        comments.style.display = 'none';
+    }
+}
+
+/*
+function updateCommentsOnTransition() {
+    if (!commentsEnabled()) return;
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    if (giscusIframe === null) return;
+    giscusIframe.contentWindow.postMessage(
+        {
+            giscus: {
+                setConfig: {
+                    term: window.location.pathname.replace(/^\//, ''),
+                    backLink: window.location.href + '?giscus-logged-in'
+                }
+            }
+        },
+        '*'
+    );
+}
+*/
+
+document.addEventListener('DOMContentLoaded', function() {
+    /*
+    Barba.Pjax.start();
+    Barba.Dispatcher.on('transitionCompleted', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        Prism.highlightAll();
+        toggleToTopBtn();
+        toggleComments();
+        updateCommentsOnTransition();
+    });
+    */
+
+    toggleToTopBtn();
+    showThanksForSubscriptionAlertIfSubscribed();
+    toggleComments();
+});</script></body></html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index, follow"><meta name="google-site-verification" content="7Vxvzs1QobmcQElr_rNUddMrgaDuT2v1jJ-HMRWN9DU"><title>Тестируемый код • Ilia's notes</title><meta name="description" content="Ilia's notes about software architecture, testability, and other, more mundane things"><link rel="icon" href="/journal-code.svg"><link rel="stylesheet" href="https://unpkg.com/nanoreset@3.0.1/nanoreset.min.css"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="Ilia's notes"><link rel="stylesheet" href="/css/prism.css"><script src="/js/prism.js"></script><meta name="generator" content="Hexo 6.3.0"></head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="Ilia's notes"><img class="logo-image" src="/journal-code.svg" alt="logo">Ilia's notes</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">BLOG</a></li><li class="nav-list-item"><a class="nav-list-link" href="/about" target="_self">ABOUT</a></li><li class="nav-list-item"><a class="nav-list-link" href="/links" target="_self">LINKS</a></li></ul></header><div id="barba-wrapper"><div class="barba-container"><main class="container"><div class="post" data-comments-enabled="1"><article class="post-block"><h1 class="post-title">Тестируемый код</h1><div class="post-info">10.02.2022
+<a href="../categories/RU/" title="RU">
+<span class="cat-prefix">@</span>RU</a>
+<a href="../tags/unit-tests/" title="unit-tests">
+<span class="tag-prefix">#</span>unit-tests</a><a href="../tags/architecture/" title="architecture">
+<span class="tag-prefix">#</span>architecture</a></div><div class="post-content"><p>Астрологи обьявили неделю Тестируемого Кода.</p>
+<p>Простота поддержки приложений выросла дофига.</p>
+<span id="more"></span>
+
+<p>Никогда не будет лишним напнить себе о принципах тестируемого кода. Под “тестируемым кодом” будем понимать код, который можно легко покрыть unit-тестами. Само по себе <a target="_blank" rel="noopener" href="https://www.notion.so/unit-8e41b98d53284531930883e409e78a36?pvs=21">определение unit-теста</a> дискусионно (об этом в другой раз). Сейчас будем считать что unit-тесты — это тесты которые для своего выполнения не нуждаются в меж-процессных взаимодействиях (обращениях к БД, сети, файловой системе и т.д.). </p>
+<p>Даже если мы не пишем unit-тесты (почти) никогда, уже само по себе следование принципам тестируемости улучшает качество и простоту поддержки кода. К тому же, всегда есть небольшая вероятность что время для написания тестов появится (хаха), и вы (или кто-то другой) будете благодарны себе за то что для покрытия проекта тестами его не нужно переписывать “с нуля”.</p>
+<p>Можно сказать что “тестируемость кода“ - это отсутствие факторов которые затрудняют написание unit-тестов. </p>
+<p>Пожалуй основной принцип тестируемости - изоляция кода бизнес-логики от меж-процессных взаимодействий (инфраструктурного кода). Замечу что имеет смысл покрывать unit-тестами именно код бизнес-логики. Инфраструктурный код тестируется в рамках <a target="_blank" rel="noopener" href="https://www.notion.so/44b9e17db8844fbdbae6cc71ac56e77a?pvs=21">интеграционных тестов</a>, и следовательно к нему эти принципы применять не обязательно. </p>
+<p>Код бизнес-логики - это код где принимаются решения, и который оперирует высокоуровневыми понятиями (”пользователь”, “заявка”, “документ”). Этот код - самый ценный для компании, он главный артефакт нашей работы.</p>
+<p>А инфраструктурный код - это весь остальной вспомогательный код, который обеспечивает работу с сетью, БД, файлами и т.д. Он оперирует низкоуровневыми понятиями (”файл”, “таблица”, “POST-запрос”). Этот код не явлеется ключевой ценностью для компании и может быть заменен другой реализацией при необходимости. Все фреймворки, ORM и большинство библиотек в vendor принадлежат целиком к этому типу кода.</p>
+<p>Когда в процессе написания бизнес-кода задаешься вопросом “а как это можно было бы покрыть unit-тестом?”, невольно будешь вынужден отделять его от инфраструктурного кода. Кстати, главная задача <a target="_blank" rel="noopener" href="https://www.notion.so/7c230ce381a6488a8b389f12d560d72f?pvs=21">правильной архитектуры</a> - обеспечить это разделение и сделать так чтоб инфраструктурный код зависел от кода бизнес-логики, но не наоборот (об этом тоже в другой раз).</p>
+<p>Также, думая о unit-тестах, с большей вероятностью будешь применять SOLID и разбивать программу на компоненты с низким зацеплением и высокой связностью (low coupling, high cohesion).</p>
+<p>Кроме этого фактора есть множество менее критичных. Краткий список есть в этой статье от разработчиков в Гугле <a target="_blank" rel="noopener" href="http://misko.hevery.com/code-reviewers-guide/">http://misko.hevery.com/code-reviewers-guide/</a>, а из нее можно перейти к более подробным статьям с обоснованиями. Но там много читать не по-нашому, так что я сам еще всё не прочёл) Но хотя бы поверхностно рекоммендую просмотреть.</p>
+</div></article></div><a href="javascript:window.scrollTo({ top: 0, behavior: 'smooth' })" id="to-top"><span>↑ back to top</span></a></main></div></div><div class="giscus" id="comments"></div><footer><div class="copyright"><p>&copy; 2022 - 2023 Ilia Yatsenko<br>Powered by <a href="https://hexo.io/" rel="noreferrer" target="_blank">Hexo</a>, <a href="https://mailchimp.com/" rel="noreferrer" target="_blank">Mailchimp</a> and <a href="https://giscus.app/" rel="noreferrer" target="_blank">Giscus</a><br>Design inspired by <a href="https://github.com/tiaanduplessis/hexo-theme-brewski" rel="noreferrer" target="_blank">Brewski</a><br>Sources of this blog on  <a href="https://github.com/iliayatsenko/iliayatsenko.github.io" rel="noreferrer" target="_blank">Github</a></p></div></footer></div><!-- Giscus--><script src="https://giscus.app/client.js" data-repo="iliayatsenko/iliayatsenko.github.io" data-repo-id="R_kgDOHnmmlw" data-category="Announcements" data-category-id="DIC_kwDOHnmml84CYDR-" data-mapping="pathname" data-strict="1" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light_high_contrast" data-loading="lazy" data-lang="en" crossorigin="anonymous" async></script><!-- Other--><script>function toggleToTopBtn() {
+    var toTopBtn = document.getElementById('to-top');
+    if (toTopBtn === null) return;
+    if (window.innerHeight >= document.documentElement.scrollHeight) {
+        toTopBtn.style.display = 'none';
+    } else {
+        toTopBtn.style.display = 'block';
+    }
+}
+
+function showThanksForSubscriptionAlertIfSubscribed() {
+    if (window.location.hash === '#subscribed') {
+        alert('Thank you for your subscription!');
+        history.replaceState(null, null, ' ')
+    }
+}
+
+function commentsEnabled() {
+    let commentsEnabled = false;
+    const post = document.getElementsByClassName('post')[0];
+    if (post) {
+        commentsEnabled = post.dataset.commentsEnabled === '1' ? true : false;
+    }
+    return commentsEnabled;
+}
+
+function toggleComments() {
+    const comments = document.getElementsByClassName('giscus')[0];
+    if (commentsEnabled()) {
+        comments.style.display = 'block';
+    } else {
+        comments.style.display = 'none';
+    }
+}
+
+/*
+function updateCommentsOnTransition() {
+    if (!commentsEnabled()) return;
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    if (giscusIframe === null) return;
+    giscusIframe.contentWindow.postMessage(
+        {
+            giscus: {
+                setConfig: {
+                    term: window.location.pathname.replace(/^\//, ''),
+                    backLink: window.location.href + '?giscus-logged-in'
+                }
+            }
+        },
+        '*'
+    );
+}
+*/
+
+document.addEventListener('DOMContentLoaded', function() {
+    /*
+    Barba.Pjax.start();
+    Barba.Dispatcher.on('transitionCompleted', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        Prism.highlightAll();
+        toggleToTopBtn();
+        toggleComments();
+        updateCommentsOnTransition();
+    });
+    */
+
+    toggleToTopBtn();
+    showThanksForSubscriptionAlertIfSubscribed();
+    toggleComments();
+});</script></body></html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index, follow"><meta name="google-site-verification" content="7Vxvzs1QobmcQElr_rNUddMrgaDuT2v1jJ-HMRWN9DU"><title>Unit test definition • Ilia's notes</title><meta name="description" content="Ilia's notes about software architecture, testability, and other, more mundane things"><link rel="icon" href="/journal-code.svg"><link rel="stylesheet" href="https://unpkg.com/nanoreset@3.0.1/nanoreset.min.css"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="Ilia's notes"><link rel="stylesheet" href="/css/prism.css"><script src="/js/prism.js"></script><meta name="generator" content="Hexo 6.3.0"></head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="Ilia's notes"><img class="logo-image" src="/journal-code.svg" alt="logo">Ilia's notes</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">BLOG</a></li><li class="nav-list-item"><a class="nav-list-link" href="/about" target="_self">ABOUT</a></li><li class="nav-list-item"><a class="nav-list-link" href="/links" target="_self">LINKS</a></li></ul></header><div id="barba-wrapper"><div class="barba-container"><main class="container"><div class="post" data-comments-enabled="1"><article class="post-block"><h1 class="post-title">Unit test definition</h1><div class="post-info">06.06.2022
+<a href="../categories/EN/" title="EN">
+<span class="cat-prefix">@</span>EN</a>
+<a href="../tags/unit-tests/" title="unit-tests">
+<span class="tag-prefix">#</span>unit-tests</a></div><div class="post-content"><p>Historically, there have been two views on what a unit test should be:</p>
+<ul>
+<li><strong>“London school”</strong> (or “mockist” approach),</li>
+<li><strong>“Detroit school”</strong> (or “classical” approach).</li>
+</ul>
+<span id="more"></span>
+
+<p>Both approaches agree that “units” should be isolated. The fundamental difference is what exactly is meant by a “unit” and what exactly to isolate from.</p>
+<p>“Mockists” consider <strong>a unit of code</strong> (most often one specific class) as a unit, and “classics” consider it <strong>a unit of behavior, or a “feature”</strong> (a module of one or more classes).  ****“Mockists” believe that each unit should be tested in isolation from other units, and “classics” - that each feature should be tested in isolation from inter-process interactions (that is, tests should not rely on something “outside” the running process - system time, database, file system, network, etc.).</p>
+<p>For example, we have a feature “Car”. The car has a starting price and engine power reserve. The car can drive until the number of kilometers traveled exceeds 300 000, while losing 0.01% in price per kilometer. Let’s say we wrote the code like this:</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php">class Car
+&#123;
+    private Engine $engine;
+    private float $currentPrice;
+    public function __construct(Engine $engine, float $startPrice)
+    &#123;
+        $this-&gt;engine &#x3D; $engine;
+        $this-&gt;currentPrice &#x3D; $startPrice;
+    &#125;
+    public function run(int $kilometers)
+    &#123;
+        $this-&gt;engine-&gt;run($kilometers);
+        $this-&gt;currentPrice -&#x3D; ($kilometers * $this-&gt;currentPrice &#x2F; 10000);
+    &#125;
+    public function getCurrentPrice()
+    &#123;
+        return $this-&gt;currentPrice;
+    &#125;
+&#125;
+class Engine
+&#123;
+    const MAX_KILOMETERS &#x3D; 300_000;
+    private int $counter &#x3D; 0;
+    public function run(int $kilometers)
+    &#123;
+        if ($this-&gt;counter &gt; self::MAX_KILOMETERS) &#123;
+            throw new MaintenanceRequiredException();
+        &#125;
+        $this-&gt;counter +&#x3D; $kilometers;
+        echo &#39;Drrruuummmm!!!&#39;;
+    &#125;
+&#125;</code></pre>
+
+<p>Mokists treat both <code>Car</code> and <code>Engine</code>as two separate units and aim for a “one class &#x3D; one test” match. All dependencies of the currently tested class are replaced with mocks:</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php">&#x2F;&#x2F; mockists&#39; unit-test
+&#x2F;&#x2F; CarTest.php
+function test_car_becomes_cheaper()
+&#123;
+    &#x2F;&#x2F; Mock Engine, because now only the Car is under test
+    $engineMock &#x3D; Mock::create(Engine::class);
+    $startPrice &#x3D; 10_000;
+    $car &#x3D; new Car($engineMock, $startPrice);
+    $car-&gt;run(1000);
+    assertEquals(9990, $car-&gt;getCurrentPrice());
+        &#x2F;&#x2F; also need to check that Car had interacted with Engine
+        $engineMock-&gt;assertCalledOnce(&#39;run&#39;, [1000]);
+&#125;
+&#x2F;&#x2F; EngineTest.php
+function test_engine_cannot_run_more_than_300_000()
+&#123;
+    &#x2F;&#x2F; Now testing only Engine
+    $engine &#x3D; new Engine();
+    expectException(MaintenanceRequiredException::class);
+    $engine-&gt;run(300_001);
+&#125;</code></pre>
+
+<p>And for the “classics” there will be only one unit here - <code>Car</code>, since it implements the behavior we are interested in. And the <code>Engine</code> itself is only an implementation detail of this behavior, a separate test is not written for it:</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php">&#x2F;&#x2F; CarTest.php
+function test_car_becomes_cheeper()
+&#123;
+    $startPrice &#x3D; 10_000;
+        &#x2F;&#x2F; Testing Car as a whole, as a behavioral unit
+    $car &#x3D; new Car(new Engine(), $startPrice);
+    $car-&gt;run(1000);
+    assertEquals(9990, $car-&gt;getCurrentPrice());
+&#125;
+function test_car_cannot_run_more_than_300_000()
+&#123;
+        &#x2F;&#x2F; Don&#39;t check interactions between classes,
+        &#x2F;&#x2F; treat the feature as one thing
+    $car &#x3D; new Car(new Engine(), 10_000);
+    expectException(MaintenanceRequiredException::class);
+    $car-&gt;run(300_001);
+&#125;</code></pre>
+
+<p>With this approach, there will be no correspondence “one class &#x3D; one test”. And mocks are needed only to replace classes that provide inter-process interactions (for example, repositories, or network clients), i.e. <a target="_blank" rel="noopener" href="https://www.notion.so/f679b40f4fe846439679865e6dc35dac?pvs=21">infrastructure code</a> . About <a target="_blank" rel="noopener" href="https://www.notion.so/11466bd83e20420b8bbb1906927cb014?pvs=21">the types of mocks</a> - another time.</p>
+<p>Both approaches have their pros and cons.</p>
+<p><strong>“London School”</strong></p>
+<p>+++ It’s easier to determine the cause of test failures: just look at the class whose test failed.</p>
+<p>+++ It’s easy to instantiate the classes under test by simply mocking all the dependencies.</p>
+<p>— Due to the abundance of mocks and checks of inter-class interactions, tests become more “brittle”, that is, tied to<br>the internal structure of the code. With the slightest refactoring, you will have to edit a lot of tests.</p>
+<p>— Tests describe expectations in a very granular way. While reading them it is difficult to understand the<br>requirements for the system as a whole, there is a risk of “not seeing the forest behind the trees”.</p>
+<p>— Requires auxiliary libraries for creating mocks.</p>
+<p><strong>“Detroit School”</strong></p>
+<p>+++ Since we are testing only the behavior of the feature that is observable from the outside, the best ratio of “protection from bugs &#x2F; labor costs for supporting tests” is achieved. Inside the feature, you can refactor in any way - for example, move the kilometer counter to a separate class if the calculation logic becomes more complicated, etc. - you don’t have to edit the tests.</p>
+<p>+++ Tests are at the same time a kind of documentation, as they describe the expectations from the system as a whole, using formulations that are closer to the real world.</p>
+<p>— When tests fail, it is not immediately clear where exactly the reason is, since several real classes are involved<br>in the test at once.</p>
+<p>— In tests, you need to create full-fledged instances with all dependent objects, which can be a daunting task and<br>  require helper factory methods.</p>
+<p>Personally, in this regard, I share the preferences of V. Khorikov - the author of a book about unit testing - and I write tests in the classical style, with a minimum number of mocks. More information on the topic can be found in <a target="_blank" rel="noopener" href="https://www.amazon.com/gp/product/1617296279">his book</a>.</p>
+</div></article></div><a href="javascript:window.scrollTo({ top: 0, behavior: 'smooth' })" id="to-top"><span>↑ back to top</span></a></main></div></div><div class="giscus" id="comments"></div><footer><div class="copyright"><p>&copy; 2022 - 2023 Ilia Yatsenko<br>Powered by <a href="https://hexo.io/" rel="noreferrer" target="_blank">Hexo</a>, <a href="https://mailchimp.com/" rel="noreferrer" target="_blank">Mailchimp</a> and <a href="https://giscus.app/" rel="noreferrer" target="_blank">Giscus</a><br>Design inspired by <a href="https://github.com/tiaanduplessis/hexo-theme-brewski" rel="noreferrer" target="_blank">Brewski</a><br>Sources of this blog on  <a href="https://github.com/iliayatsenko/iliayatsenko.github.io" rel="noreferrer" target="_blank">Github</a></p></div></footer></div><!-- Giscus--><script src="https://giscus.app/client.js" data-repo="iliayatsenko/iliayatsenko.github.io" data-repo-id="R_kgDOHnmmlw" data-category="Announcements" data-category-id="DIC_kwDOHnmml84CYDR-" data-mapping="pathname" data-strict="1" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light_high_contrast" data-loading="lazy" data-lang="en" crossorigin="anonymous" async></script><!-- Other--><script>function toggleToTopBtn() {
+    var toTopBtn = document.getElementById('to-top');
+    if (toTopBtn === null) return;
+    if (window.innerHeight >= document.documentElement.scrollHeight) {
+        toTopBtn.style.display = 'none';
+    } else {
+        toTopBtn.style.display = 'block';
+    }
+}
+
+function showThanksForSubscriptionAlertIfSubscribed() {
+    if (window.location.hash === '#subscribed') {
+        alert('Thank you for your subscription!');
+        history.replaceState(null, null, ' ')
+    }
+}
+
+function commentsEnabled() {
+    let commentsEnabled = false;
+    const post = document.getElementsByClassName('post')[0];
+    if (post) {
+        commentsEnabled = post.dataset.commentsEnabled === '1' ? true : false;
+    }
+    return commentsEnabled;
+}
+
+function toggleComments() {
+    const comments = document.getElementsByClassName('giscus')[0];
+    if (commentsEnabled()) {
+        comments.style.display = 'block';
+    } else {
+        comments.style.display = 'none';
+    }
+}
+
+/*
+function updateCommentsOnTransition() {
+    if (!commentsEnabled()) return;
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    if (giscusIframe === null) return;
+    giscusIframe.contentWindow.postMessage(
+        {
+            giscus: {
+                setConfig: {
+                    term: window.location.pathname.replace(/^\//, ''),
+                    backLink: window.location.href + '?giscus-logged-in'
+                }
+            }
+        },
+        '*'
+    );
+}
+*/
+
+document.addEventListener('DOMContentLoaded', function() {
+    /*
+    Barba.Pjax.start();
+    Barba.Dispatcher.on('transitionCompleted', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        Prism.highlightAll();
+        toggleToTopBtn();
+        toggleComments();
+        updateCommentsOnTransition();
+    });
+    */
+
+    toggleToTopBtn();
+    showThanksForSubscriptionAlertIfSubscribed();
+    toggleComments();
+});</script></body></html>
