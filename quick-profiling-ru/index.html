@@ -8,12 +8,16 @@
 
 <p>Нам понадобится: установленный xdebug (версия 3, для версии 2 будут другие названия параметров в php.ini), браузер или phpStorm, опционально docker.</p>
 <p>Включаем режим профилирования в xdebug. Для этого в php.ini добавляем это:</p>
-<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">xdebug.mode&#x3D;profile # или debug,profile, если хотим комбинированный режим</code></pre>
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini"># или debug,profile, если хотим комбинированный режим
+xdebug.mode&#x3D;profile</code></pre>
 
 <p>и это:</p>
-<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">xdebug.output_dir&#x3D;&#x2F;var&#x2F;profiling # куда писать файлы с результатами
-xdebug.use_compression&#x3D;false # не архивировать файлы
-xdebug.profiler_output_name&#x3D;cachegrind.out.%H.%R # шаблон имен файлов </code></pre>
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini"># куда писать файлы с результатами
+xdebug.output_dir&#x3D;&#x2F;var&#x2F;profiling
+# не архивировать файлы
+xdebug.use_compression&#x3D;false
+# шаблон имен файлов 
+xdebug.profiler_output_name&#x3D;cachegrind.out.%H.%R</code></pre>
 
 <p>, где <code>/var/profiling</code> - абсолютный путь к папке, куда профайлер будет складывать результаты работы. Если проект в докере, эта папка должна быть доступна с хоста. Для этого удобно поместить её где-то внутри папки приложения, т.к. папка приложения в процессе разработки уже, как правило, маппится в докер-контейнер. А для того чтоб созданные файлы не добавлялись в git, можно поместить эту папку внутрь какой-то уже добавленной в .gitignore, например, <code>var</code> или <code>runtime</code>.  Путь должен быть абсолютным внутри контейнера, то есть если у нас папка проекта <code>/home/user/myapp</code> маппится на <code>/var/www</code> в докер-контейнере, то надо указать <code>/var/www/var/profiling</code>. </p>
 <p>Создаем папку и даем права на запись:</p>
