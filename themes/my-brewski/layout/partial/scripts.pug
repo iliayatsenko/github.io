@@ -92,10 +92,10 @@ script.
     */
 
     function initSummaryButtonsArrows() {
-        const summaryBtns = document.getElementsByTagName('summary');
-        for (let i = 0; i < summaryBtns.length; i++) {
-            summaryBtns[i].addEventListener('click', function() {
-               this.classList.toggle('opened');
+        const hiddenBlocks = document.getElementsByTagName('details');
+        for (let i = 0; i < hiddenBlocks.length; i++) {
+            hiddenBlocks[i].addEventListener('toggle', function() {
+                hiddenBlocks[i].querySelector('summary').classList.toggle('opened');
             });
         }
     }
