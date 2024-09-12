@@ -37,6 +37,29 @@ script(
 // Other
 script.
 
+    function addAnchors() {
+        document.querySelectorAll('h3, h4, h5, h6').forEach(function (element) {
+            element.innerHTML = `${element.innerText}  <a style="display:none" class="paragraph-anchor" href="#${element.id}">#</a>`
+
+            element.addEventListener('mouseover', function () {
+                element.querySelector('.paragraph-anchor').style.display = 'inline-block';
+            })
+            element.addEventListener('mouseout', function () {
+                element.querySelector('.paragraph-anchor').style.display = 'none';
+            })
+        })
+    }
+
+    function highlightAnchor() {
+        var anchor = document.getElementById(location.hash.substring(1));
+        if (anchor !== null) {
+            anchor.style.textDecoration = 'underline #9e1900';
+            setTimeout(function () {
+                anchor.style.textDecoration = 'none';
+            }, 2500)
+        }
+    }
+
     function toggleToTopBtn() {
         var toTopBtn = document.getElementById('to-top');
         if (toTopBtn === null) return;
@@ -112,11 +135,19 @@ script.
         });
         */
 
+        addAnchors();
         toggleToTopBtn();
         showThanksForSubscriptionAlertIfSubscribed();
         toggleComments();
         initSummaryButtonsArrows();
+        highlightAnchor();
     });
+
+    window.addEventListener(
+        "hashchange",
+        highlightAnchor
+    );
+
 
 
 
