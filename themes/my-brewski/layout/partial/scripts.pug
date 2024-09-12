@@ -51,7 +51,7 @@ script.
     }
 
     function highlightAnchor() {
-        var anchor = document.getElementById(location.hash.substring(1));
+        var anchor = document.getElementById(decodeURI(location.hash.substring(1)));
         if (anchor !== null) {
             anchor.style.textDecoration = 'underline #9e1900';
             setTimeout(function () {
