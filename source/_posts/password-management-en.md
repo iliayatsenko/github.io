@@ -3,7 +3,6 @@ title: Programmerish password management
 date: 2023-07-17
 tags:
     - password-management
-    - manual
 categories:
     - EN
 ---

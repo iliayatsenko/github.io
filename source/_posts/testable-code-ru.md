@@ -2,7 +2,7 @@
 title: Тестируемый код
 date: 2022-02-10
 tags:
-    - unit-tests
+    - tests
     - architecture
 categories:
     - RU

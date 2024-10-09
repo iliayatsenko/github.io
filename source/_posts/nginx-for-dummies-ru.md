@@ -3,7 +3,6 @@ title: NGINX для чайников
 date: 2022-05-30
 tags:
     - nginx
-    - cheatsheet
 categories:
     - RU
 ---

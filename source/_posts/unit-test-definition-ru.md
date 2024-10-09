@@ -2,7 +2,7 @@
 title: Определение unit-теста
 date: 2022-06-06
 tags:
-    - unit-tests
+    - tests
 categories:
     - RU
 ---

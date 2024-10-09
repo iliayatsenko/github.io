@@ -4,9 +4,7 @@ date: 2023-10-22
 tags:
     - android
     - api
-    - https
     - mitmproxy
-    - manual
 categories:
     - EN
 ---

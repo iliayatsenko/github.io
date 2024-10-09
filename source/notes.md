@@ -47,6 +47,92 @@ Links:
 
 </details>
 
+<br/>
+
+<details>
+   <summary>
+
+###### VSCode Hotkeys
+
+   </summary>
+
+open/hide sidebar: cmd b
+
+file exprlorer: cmd shift e
+
+open file in preview: space
+
+open in new tab: cmd down
+
+last edit location: cmd shift backspace
+
+last location: ctlr - (back), ctrl shift - (forward)
+
+reveal in explorer: shift cmd w
+
+terminal: cmd j
+
+latest files: ctrl tab
+
+expand selection: cmd d
+
+outline: shift cmd o
+
+select all occurences of symbol: shift cmd l
+
+double line: alt shift down/up
+
+move line: alt down/up
+
+add cursor: alt cmd down/up
+
+focus on breadcrumbs: shift cmd dot
+
+search for implementations/definitions: cmd/alt f12
+
+goto matching bracket: cmd shift \
+
+rename symbol: f2
+
+see problems: shift cmd m
+
+search for symbol: cmd t
+
+search for symbol in editor: shift cmd o
+
+search references to a symbol: shift f12
+
+focus on open editors: cmd k e
+
+list all open editors: cmd alt tab
+
+column selection: shift alt (hold)
+
+fold/unfold: cmd alt [/]
+
+focus on next/prev part of screen: f6/shift f6
+
+go to next/prev difference f7/shift f7
+
+pin tab: cmd k shift enter
+
+goto bracket: shift cmd \
+
+goto next/prev change in file: alt f5 / shift alt f5
+
+focus on peek editor: cmd k f2
+
+open recent project: ctrl r
+
+run and debug: cmd shift d
+
+focus on next/prev editor/terminal group: cmd shift [/]
+
+close other editors in group: cmd alt t
+
+
+</details>
+
 
 <!--- Template:
 

@@ -4,9 +4,7 @@ date: 2023-10-27
 tags:
     - ios
     - api
-    - https
     - mitmproxy
-    - manual
 categories:
     - EN
 ---

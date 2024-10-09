@@ -2,7 +2,7 @@
 title: Unit test definition
 date: 2022-06-06
 tags:
-    - unit-tests
+    - tests
 categories:
     - EN
 ---
