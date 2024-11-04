@@ -12,7 +12,7 @@ comments: true
 <details>
    <summary>
 
-###### Run hexo in a docker container
+##### Run hexo in a docker container
 
    </summary>
 
@@ -22,12 +22,14 @@ comments: true
 
 </details>
 
+---
+
 <br/>
 
 <details>
    <summary>
 
-###### Encodings
+##### Encodings
 
    </summary>
 
@@ -47,12 +49,14 @@ Links:
 
 </details>
 
+---
+
 <br/>
 
 <details>
    <summary>
 
-###### VSCode Hotkeys
+##### VSCode Hotkeys
 
    </summary>
 
@@ -136,12 +140,14 @@ close other editors in group: cmd alt t
 
 <!--- Template:
 
+---
+
 <br/>
 
 <details>
    <summary>
 
-###### Title
+##### Title
 
    </summary>
 

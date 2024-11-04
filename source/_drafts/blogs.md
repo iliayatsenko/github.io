@@ -23,6 +23,9 @@ https://research.swtch.com/
 https://haykot.dev/blog/
 https://mehdihadeli.github.io/awesome-go-education/best-practices/
 https://justinas.org/
+https://duncanleung.com/
+https://www.alexedwards.net/blog
+https://freshman.tech/
 
 php:
 https://sarvendev.com/blog-en/
@@ -38,3 +41,8 @@ https://www.harrisrafto.eu/
 other:
 https://www.kenmuse.com/
 https://mysqlexplain.com/
+https://mcfunley.com/
+https://vladikk.com/
+
+laravel:
+https://sjorso.com/

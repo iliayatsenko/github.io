@@ -38,8 +38,8 @@ script(
 script.
 
     function addAnchors() {
-        document.querySelectorAll('h3, h4, h5, h6').forEach(function (element) {
-            element.innerHTML = `${element.innerText}  <a style="display:none" class="paragraph-anchor" href="#${element.id}">#</a>`
+        document.querySelectorAll('h3, h4, h5').forEach(function (element) {
+            element.innerHTML = `${element.innerHTML}  <a style="display:none" class="paragraph-anchor" href="#${element.id}">#</a>`
 
             element.addEventListener('mouseover', function () {
                 element.querySelector('.paragraph-anchor').style.display = 'inline-block';
