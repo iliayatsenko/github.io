@@ -7,9 +7,9 @@ categories:
     - EN
 ---
 
-### Intro
-
 How to write tests that rely on some data in certain state?
+<!-- more --> 
+
 Managing test data is maybe one of the most complicated things to make right in tests.
 
 This article is about integration and functional tests. Because in the {% post_link unit-test-definition-en 'unit test' %} we mostly do not rely on any external data.
