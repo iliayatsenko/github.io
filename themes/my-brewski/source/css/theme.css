@@ -70,32 +70,23 @@ video {
 
 table th {
   font-weight: 600;
-  border: 0;
+  border: 1px solid #9e1900;
   text-align: left;
   margin: 0;
   padding: .4em .8em;
+  background-color: #f6f8fa;
 }
 table thead {
   background-color: #fff;
 }
 table tbody tr {
-  border-top: 0;
+  border-top: 1px solid #9e1900;
   background-color: #fff;
 }
-table tbody tr:nth-child(2n) {
-  background-color: #f6f8fa;
-}
 table tbody td {
-  border: .05em solid transparent;
+  border: 1px solid #9e1900;
   text-align: left;
-}
-table tbody th :first-child,
-table tbody td :first-child {
-  margin-top: 0;
-}
-table tbody th :last-child,
-table tbody td :last-child {
-  margin-bottom: 0;
+  padding: 10px;
 }
 
 header {
@@ -492,4 +483,8 @@ summary {
 
 summary::-webkit-details-marker {
   display: none;
+}
+
+article {
+  padding-bottom: 30px;
 }

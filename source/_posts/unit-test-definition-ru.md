@@ -162,3 +162,7 @@ function test_car_cannot_run_more_than_300_000()
  потребовать вспомогательных методов-фабрик.
 
 Лично я в этом плане разделяю предпочтения В.Хорикова - автора книги про юнит-тестирование - и пишу тесты в классическом стиле, с минимальным количеством моков. Больше информации по теме можно найти в его статье на [Хабре](https://habr.com/ru/company/jugru/blog/571126/) или в [самой книге](https://www.amazon.com/gp/product/1617296279).
+
+Статьи по теме:
+- [Mocks aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html)
+- [Test Doubles at Google](https://abseil.io/resources/swe-book/html/ch13.html)

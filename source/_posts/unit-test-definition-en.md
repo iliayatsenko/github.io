@@ -134,3 +134,7 @@ in the test at once.
   require helper factory methods.
 
 Personally, in this regard, I share the preferences of V. Khorikov - the author of a book about unit testing - and I write tests in the classical style, with a minimum number of mocks. More information on the topic can be found in [his book](https://www.amazon.com/gp/product/1617296279).
+
+Useful links:
+  - [Mocks aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html)
+  - [Test Doubles at Google](https://abseil.io/resources/swe-book/html/ch13.html)
