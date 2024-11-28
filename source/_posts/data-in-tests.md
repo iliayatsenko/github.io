@@ -101,3 +101,15 @@ Comparison of approaches to test data cleanup:
 What way of data population and cleanup to choose? In general, I'd suggest to follow such guideline:
   - If project is relatively simple, i.e. contains several entities, and provides mostly CRUD-like operations, use "Shared Fixture". For cleanup, use what is simpler: for example, in PHP world, if you are using Doctrine, it's quite simple to set up automatic rollback of changes made during tests - just use aforementioned extension. If you are not a Doctrine user, maybe "purging and repopulating" will be simpler to implement and support.
   - Instead, if project contains lots of business logic, it is preferable to invest time in implementing "Fresh Fixture". This, aside of other benefits, will probably eliminate the need to do a cleanup at all. But if you still need full isolation, choose between "purging and repopulating" and "rolling back transactions" approaches, depending on what is simpler to implement. "Tracking and reverting" approach should be avoided because potentially it may become very complex shortly.
+
+### UPD1:
+Another option for the implementation of cleanup is [Automated Teardown](http://xunitpatterns.com/Automated%20Teardown.html): in short, it implies tracking all the data items inserted during the test, and delete them after the test. This pattern is applicable only when using "Fresh Fixture". And it does not provide full isolation, because only newly inserted items will be cleaned up - updates and deletions will stay intact. Also note that it is not so easy to implement, especially if you want to additionally clean up the items, which were inserted by tested code, not the test itself. However, if it's enough for you to only cleanup what was inserted by test itself, testing frameworks may have this feature implemented. For example `codeception/module-db` automatically removes the data, inserted using `haveInDatabase()` method, after each test.
+
+### UPD2:
+Despite I do not know any helper libraries for "Fresh Fixture" implementation, there is an interesting feature in Laravel framework - [Eloquent Factories](https://laravel.com/docs/11.x/eloquent-factories). It makes creating and persisting  objects of any given state very concise and expressive. But obviously it is tightly coupled to Eloquent models, so can be used only with Laravel.
+
+### Useful links
+
+About fixtures: https://matthiasnoback.nl/2018/07/about-fixtures/
+About advantages of "Fresh Fixture" https://matthiasnoback.nl/2021/09/quick-testing-tips-self-contained-tests/
+Another opinion (quite similar) about tests' data isolation: https://lostechies.com/jimmybogard/2012/10/18/isolating-database-data-in-integration-tests/
