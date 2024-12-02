@@ -108,6 +108,9 @@ Another option for the implementation of cleanup is [Automated Teardown](http://
 ### UPD2:
 Despite I do not know any helper libraries for "Fresh Fixture" implementation, there is an interesting feature in Laravel framework - [Eloquent Factories](https://laravel.com/docs/11.x/eloquent-factories). It makes creating and persisting  objects of any given state very concise and expressive. But obviously it is tightly coupled to Eloquent models, so can be used only with Laravel.
 
+### UPD3:
+Another interesting, although not very popular, library for "Fresh Fixture" implementation is `thephpleague/factory-muffin`. It is a standalone library, not coupled to any specific framework, and provides a way to define factories for your models. Codeception has a module for it - `codeception/module-datafactory`.
+
 ### Useful links
 
 About fixtures: https://matthiasnoback.nl/2018/07/about-fixtures/

@@ -44,6 +44,7 @@ https://www.kenmuse.com/
 https://mysqlexplain.com/
 https://mcfunley.com/
 https://vladikk.com/
+https://manoylovac.github.io/
 
 laravel:
 https://sjorso.com/
